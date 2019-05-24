@@ -12,7 +12,7 @@ import java.util.Set;
 @Data
 public class User {
     @Id
-    private String name;
+    private String username;
 
     @Email
     @Column(unique = true)
@@ -40,7 +40,7 @@ public class User {
     @Override
     public String toString() {
         return "User{" +
-                "name='" + name + '\'' +
+                "username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 ", ownsLibrary=" + ownsLibrary +

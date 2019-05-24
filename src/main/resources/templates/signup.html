@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign up</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
+          rel="stylesheet">
+
+    <style type="text/css">
+        .login-form {
+            width: 340px;
+            margin: 50px auto;
+        }
+        .login-form form {
+            margin-bottom: 15px;
+            background: #f7f7f7;
+            box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+        .login-form h2 {
+            margin: 0 0 15px;
+        }
+        .form-control, .btn {
+            min-height: 38px;
+            border-radius: 2px;
+        }
+        .btn {
+            font-size: 15px;
+            font-weight: bold;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="login-form">
+    <form th:action="@{/signup}" th:object="${user}" method="post">
+        <h2 class="text-center">Sign in</h2>
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="Username" required="required" th:field="*{username}">
+        </div>
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="Email" required="required" th:field="*{email}">
+        </div>
+        <div class="form-group">
+            <input type="password" class="form-control" placeholder="Password" required="required" th:field="*{password}">
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary btn-block">Sign up</button>
+        </div>
+    </form>
+    <p class="text-center"><a href="#">Already have an account?</a></p>
+</div>
+
+
+
+</body>
+</html>

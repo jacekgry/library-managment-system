@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+>
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
+          rel="stylesheet">
+</head>
+<body>
+HOME
+<!--<span th:text="${#authentication.getPrincipal().getUsername()}"></span>-->
+<!--<span sec:authentication="name"></span>-->
+User: <span sec:authentication="name">NOT FOUND</span>
+
+</body>
+</html>

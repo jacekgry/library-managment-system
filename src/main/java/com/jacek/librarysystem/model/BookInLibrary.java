@@ -14,15 +14,18 @@ public class BookInLibrary {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @ManyToOne
+    @JoinColumn(name = "user")
     private User libraryOwner;
 
+    @ManyToOne
+    @JoinColumn(name = "book")
     private Book book;
 
-    @OneToMany
+    @OneToMany(mappedBy = "bookInLibrary")
     private List<Comment> comments;
 
-
-
-
+    @OneToMany(mappedBy = "bookInLibrary")
+    private List<Hire> hires;
 
 }
