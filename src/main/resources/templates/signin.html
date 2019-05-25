@@ -52,6 +52,9 @@
     <p class="text-center"><a th:href="${'/signup'}">Create an Account</a></p>
 </div>
 
+<div class="row" th:if="${(param.error != null) and (param.error[0] == 'true')}">
+    Successfully logged out. See you later!
+</div>
 
 
 

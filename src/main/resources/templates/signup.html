@@ -36,7 +36,7 @@
 
 <div class="login-form">
     <form th:action="@{/signup}" th:object="${user}" method="post">
-        <h2 class="text-center">Sign in</h2>
+        <h2 class="text-center">Sign up</h2>
         <div class="form-group">
             <input type="text" class="form-control" placeholder="Username" required="required" th:field="*{username}">
         </div>
@@ -50,7 +50,7 @@
             <button type="submit" class="btn btn-primary btn-block">Sign up</button>
         </div>
     </form>
-    <p class="text-center"><a href="#">Already have an account?</a></p>
+    <p class="text-center"><a href="/singin">Already have an account?</a></p>
 </div>
 
 
