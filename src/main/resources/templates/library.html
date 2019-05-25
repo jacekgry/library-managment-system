@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Customers</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
+          rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div th:replace="navbar::navbarinclude"></div>
+
+    <div style="margin: 10px" class="row">
+        <form class="form-inline col-sm-5 " th:action="@{/grant_access}" th:method="post">
+            <input class="form-control" type="text" placeholder="username" th:name="username">
+            <input class="btn btn-outline-success" type="submit" value="Grant access">
+        </form>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <a th:href="${'/delete_my_lib'}" role="button" class="btn btn-danger">Delete my library</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <h2>Books in my library: </h2>
+    </div>
+
+    <div>
+        <table class="table table-striped" border="1">
+
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Pages</th>
+                <th>Borrowed from</th>
+                <th>Details</th>
+                <th>Delete from my library</th>
+            </tr>
+
+            <tr th:each="book_pos : ${books}">
+                <td th:utext="${book_pos.book.title}"></td>
+                <td th:utext="${book_pos.book.author}"></td>
+                <td th:utext="${book_pos.book.pages}"></td>
+                <td>USER</td>
+                <td><a th:href="${'/book_in_library/' + book_pos.id}"/>Details</td>
+                <td>
+                    <form method="POST" th:action="@{/delete_from_my_lib}">
+                        <input type="hidden" name="id" th:value="${book_pos.id}"/>
+                        <button type="submit" name="submit" value="value" class="link-button">Delete</button>
+                    </form>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
+
+    <!--<div>-->
+        <!--<table class="table table-striped" border="1">-->
+            <!--<tr>-->
+                <!--<th>Title</th>-->
+                <!--<th>Author</th>-->
+                <!--<th>Pages</th>-->
+                <!--<th>Details</th>-->
+                <!--<th>Borrowed from</th>-->
+                <!--<th>Borrowed </th>-->
+            <!--</tr>-->
+
+            <!--<tr th:each="book : ${books}">-->
+                <!--<td th:utext="${book.title}"></td>-->
+                <!--<td th:utext="${book.author}"></td>-->
+                <!--<td th:utext="${book.pages}"></td>-->
+                <!--<td><a th:href="${'/book/' + book.id}"/>Details</td>-->
+                <!--<td>-->
+                    <!--<form method="POST" th:action="@{/add_to_my_lib}">-->
+                        <!--<input type="hidden" name="id" th:value="${book.id}"/>-->
+                        <!--<button type="submit" name="submit" value="value" class="link-button">Add</button>-->
+                    <!--</form>-->
+                <!--</td>-->
+            <!--</tr>-->
+
+        <!--</table>-->
+    <!--</div>-->
+
+
+
+
+</div>
+</body>
+</html>

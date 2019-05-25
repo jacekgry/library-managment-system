@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Customers</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
+          rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div th:replace="navbar::navbarinclude"></div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <a th:href="${'/add_book'}" role="button" class="btn btn-success">Add book</a>
+        </div>
+        <!--<div class="col-sm-9">-->
+            <!--<form class="form-inline float-right" th:action="@{/cars}" method="get">-->
+                <!--<input class="form-control" type="search" th:name='name' placeholder="name" th:value="${name}"-->
+                       <!--aria-label="Search">-->
+                <!--<input class="form-control" type="search" th:name='minPrice' placeholder="mininum price" th:value="${minPrice}"-->
+                       <!--aria-label="Search">-->
+                <!--<input class="form-control" type="search" th:name='maxPrice' th:value="${maxPrice}"-->
+                       <!--placeholder="maximum price"-->
+                       <!--aria-label="Search">-->
+                <!--<button class="btn btn-outline-success" type="submit">Search</button>-->
+            <!--</form>-->
+        <!--</div>-->
+    </div>
+
+
+    <div>
+        <table class="table table-striped" border="1">
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Pages</th>
+                <th>Details</th>
+                <th>Add to my library</th>
+            </tr>
+
+            <tr th:each="book : ${books}">
+                <td th:utext="${book.title}"></td>
+                <td th:utext="${book.author}"></td>
+                <td th:utext="${book.pages}"></td>
+                <td><a th:href="${'/book/' + book.id}"/>Details</td>
+                <td>
+                    <form method="POST" th:action="@{/add_to_my_lib}">
+                        <input type="hidden" name="book" th:value="${book.id}"/>
+                        <button type="submit" name="submit" value="value" class="link-button">Add</button>
+                    </form>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
+
+</div>
+</body>
+</html>

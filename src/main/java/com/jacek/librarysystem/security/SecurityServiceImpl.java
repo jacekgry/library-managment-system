@@ -1,5 +1,7 @@
 package com.jacek.librarysystem.security;
 
+import com.jacek.librarysystem.model.User;
+import com.jacek.librarysystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,14 +20,12 @@ public class SecurityServiceImpl implements SecurityService {
 
     private final UserDetailsService userDetailsService;
 
+    private final UserService userService;
 
     @Override
     public String findLoggedInUsername() {
-        Object userDetails = SecurityContextHolder.getContext().getAuthentication().getDetails();
-        if (userDetails instanceof UserDetails) {
-            return ((UserDetails) userDetails).getUsername();
-        }
-        return null;
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return userDetails.getUsername();
     }
 
     @Override
@@ -42,5 +42,11 @@ public class SecurityServiceImpl implements SecurityService {
             throw new AuthenticationException("Wrong credentials!") {
             };
         }
+    }
+
+    @Override
+    public User findLoggedInUser() {
+        User user = userService.findByUsername(findLoggedInUsername());
+        return user;
     }
 }

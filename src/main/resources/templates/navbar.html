@@ -1,0 +1,46 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light" th:fragment="navbarinclude" style="margin: 10px">
+    <a class="navbar-brand" href="#">Navbar</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li th:classappend="${#httpServletRequest.getRequestURI().startsWith('/home') ? 'active':''}"
+                class="nav-items">
+                <a th:href="${'/home'}" class="nav-link" href="#">Home</a>
+            </li>
+            <li th:classappend="${#httpServletRequest.getRequestURI().startsWith('/library') ? 'active':''}"
+                class="nav-item">
+                <!--<a th:href="${'/library/'}" class="nav-link" href="#">My library</a>-->
+                <a th:href="@{'/library/' + ${#authentication.name}}" class="nav-link" href="#">My library</a>
+            </li>
+            <li th:classappend="${#httpServletRequest.getRequestURI().startsWith('/avail_libraries') ? 'active':''}"
+                class="nav-item">
+                <a th:href="${'/avail_libraries'}" class="nav-link" href="#">Available libraries</a>
+            </li>
+            <li th:classappend="${#httpServletRequest.getRequestURI().startsWith('/browsebooks') ? 'active':''}"
+                class="nav-item">
+                <a th:href="${'/books'}" class="nav-link" href="#">Browse books</a>
+            </li>
+            <!--<li th:classappend="${#httpServletRequest.getRequestURI().startsWith('/purchases') ? 'active':''}"-->
+                <!--class="nav-item">-->
+                <!--<a th:href="${'/purchases'}" class="nav-link" href="#">Purchases</a>-->
+            <!--</li>-->
+            <li class="nav-item pull-right">
+                <a th:href="${'/logout'}"  class="nav-link" href="#">Logout</a>
+            </li>
+            <li style="position: absolute; top:2px; right: 5px">Logged as: <span sec:authentication="name">USER</span></li>
+
+        </ul>
+        <!--<form class="form-inline my-2 my-lg-0">-->
+        <!--<input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">-->
+        <!--<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>-->
+        <!--</form>-->
+    </div>
+</nav>
+</html>

@@ -28,6 +28,5 @@ public class Reading {
     private Date startDate;
 
     @Temporal(value = TemporalType.DATE)
-    @NotNull
     private Date endDate;
 }

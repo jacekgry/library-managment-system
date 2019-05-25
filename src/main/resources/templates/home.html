@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
->
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+
 <head>
     <meta charset="UTF-8">
     <title>Home</title>
@@ -9,10 +12,29 @@
           rel="stylesheet">
 </head>
 <body>
-HOME
-<!--<span th:text="${#authentication.getPrincipal().getUsername()}"></span>-->
-<!--<span sec:authentication="name"></span>-->
-User: <span sec:authentication="name">NOT FOUND</span>
+<div class="container">
+    <div th:replace="navbar::navbarinclude"></div>
 
+    <div class="row">
+        <span>Average books read per year: </span>
+        <span th:text="${stats.avgBooksPerYear}"></span>
+    </div>
+
+    <div class="row">
+        <span>Average books read per month: </span>
+        <span th:text="${stats.avgBooksPerMonth}"></span>
+    </div>
+
+    <div class="row">
+        <span>Average pages read per month: </span>
+        <span th:text="${stats.avgPagesPerDay}"></span>
+    </div>
+
+    <div th:if="${lastBook}" class="row">
+        <span>Last read book: </span>
+        <a th:href="${'/book/' + lastBook.id}" th:text="${lastBook.title}"></a>
+    </div>
+
+</div>
 </body>
 </html>
