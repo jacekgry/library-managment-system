@@ -1,6 +1,8 @@
 package com.jacek.librarysystem.controller;
 
 import com.jacek.librarysystem.model.Book;
+import com.jacek.librarysystem.model.BookInLibrary;
+import com.jacek.librarysystem.model.Hire;
 import com.jacek.librarysystem.model.User;
 import com.jacek.librarysystem.security.SecurityHandler;
 import com.jacek.librarysystem.security.SecurityService;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -33,27 +37,29 @@ public class BooksController {
         return "books";
     }
 
-    @GetMapping(value = "library/{username}")
-    public String library(Model model, @PathVariable String username) {
-        User user = userService.findByUsername(username);
-        if (securityService.findLoggedInUser().equals(user) ||
-                securityService.findLoggedInUser().getUsersWhoGaveAccessToTheirLibrary().contains(user)) {
-            model.addAttribute("books", booksService.getAllBooksInLibrary(user));
-            return "library";
-        } else {
-            throw new AccessDeniedException("You have no access to this library");
-        }
-    }
 
     @PostMapping(value = "add_to_my_lib")
     public String addToMyLibrary(@RequestParam(name = "book") Long bookId) {
         booksService.addBookToLibrary(securityService.findLoggedInUser(), bookId);
-        return "redirect:/library/" + securityService.findLoggedInUser().getUsername();
+        return "redirect:/library?owner=" + securityService.findLoggedInUser().getUsername();
     }
 
     @GetMapping(value = "add_book")
     public String addBookForm(Model model) {
         model.addAttribute("book", new Book());
         return "add_book";
+    }
+
+    @GetMapping(value = "hiring")
+    public String hiringHistory(Model model, @RequestParam(name = "id") Long id) {
+        BookInLibrary book = booksService.getBookInLibraryById(id);
+        if (securityService.findLoggedInUser().equals(book.getBookOwner())
+                || book.getBookOwner().getAccessibleUsers().contains(securityService.findLoggedInUser())) {
+            List<Hire> hirings = booksService.getHiringHistory(book);
+            model.addAttribute("hires", hirings);
+            model.addAttribute("book", book);
+            return "hiring_hist";
+        }
+        throw new AccessDeniedException("You have to right to this book");
     }
 }

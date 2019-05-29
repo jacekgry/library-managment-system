@@ -19,8 +19,17 @@ public class InvitationToLibrary {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @ManyToOne
+    @JoinColumn(name = "owner")
+    private User owner;
 
+    @ManyToOne
+    @JoinColumn(name = "guest")
+    private User guest;
 
+    private String email;
 
+    private String token;
 
+    private boolean confirmed;
 }

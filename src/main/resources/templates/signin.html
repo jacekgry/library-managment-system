@@ -13,19 +13,23 @@
             width: 340px;
             margin: 50px auto;
         }
+
         .login-form form {
             margin-bottom: 15px;
             background: #f7f7f7;
             box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
             padding: 30px;
         }
+
         .login-form h2 {
             margin: 0 0 15px;
         }
+
         .form-control, .btn {
             min-height: 38px;
             border-radius: 2px;
         }
+
         .btn {
             font-size: 15px;
             font-weight: bold;
@@ -35,15 +39,39 @@
 </head>
 <body>
 
+<!--<div class="container">-->
+    <!--<div class="row">-->
+        <!--<div class="alert-warning  align-content-center" th:if="${error != null}" th:text="${error}">-->
+        <!--</div>-->
+    <!--</div>-->
+<!--</div>-->
+
+<div class="container-fluid">
+
+</div>
 
 <div class="login-form">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="text-danger text-center" th:if="${error != null}" th:text="${error}">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="text-danger text-center" th:if="${#httpServletRequest.getParameter('error') != null}" th:text="${'Bad credentials!'}">
+            </div>
+        </div>
+    </div>
+
     <form th:action="@{/signin}" th:object="${user}" method="post">
         <h2 class="text-center">Sign in</h2>
         <div class="form-group">
             <input type="text" class="form-control" placeholder="Username" required="required" th:field="*{username}">
         </div>
         <div class="form-group">
-            <input type="password" class="form-control" placeholder="Password" required="required" th:field="*{password}">
+            <input type="password" class="form-control" placeholder="Password" required="required"
+                   th:field="*{password}">
         </div>
         <div class="form-group">
             <button type="submit" class="btn btn-primary btn-block">Log in</button>
@@ -51,16 +79,6 @@
     </form>
     <p class="text-center"><a th:href="${'/signup'}">Create an Account</a></p>
 </div>
-
-<div class="row" th:if="${(param.error != null) and (param.error[0] == 'true')}">
-    Successfully logged out. See you later!
-</div>
-
-
-
-
-
-
 
 </body>
 </html>

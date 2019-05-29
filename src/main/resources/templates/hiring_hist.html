@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Customers</title>
+    <title>Hires</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
           rel="stylesheet">
@@ -10,17 +10,23 @@
 <body>
 <div class="container">
     <div th:replace="navbar::navbarinclude"></div>
-
+    <div class="row">
+        Hires of book <span th:text="${book.book.title}"></span>:
+    </div>
     <div>
         <table class="table table-striped" border="1">
             <tr>
-                <th>User</th>
-                <th>Go to library</th>
+                <th>Borrowed to</th>
+                <th>Outside</th>
+                <th>Start date</th>
+                <th>End date</th>
             </tr>
 
-            <tr th:each="user : ${users}">
-                <td th:utext="${user.username}"></td>
-                <td><a th:href="${'/library?owner=' + user.username}"/>Go</td>
+            <tr th:each="hire : ${hires}">
+                <td th:utext="${hire.borrower}"></td>
+                <td th:utext="${hire.outside}"></td>
+                <td th:utext="${hire.startDate}"></td>
+                <td th:utext="${hire.endDate}"></td>
             </tr>
         </table>
     </div>

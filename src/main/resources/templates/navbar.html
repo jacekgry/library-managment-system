@@ -17,7 +17,7 @@
             <li th:classappend="${#httpServletRequest.getRequestURI().startsWith('/library') ? 'active':''}"
                 class="nav-item">
                 <!--<a th:href="${'/library/'}" class="nav-link" href="#">My library</a>-->
-                <a th:href="@{'/library/' + ${#authentication.name}}" class="nav-link" href="#">My library</a>
+                <a th:href="@{'/library?owner=' + ${#authentication.name}}" class="nav-link" href="#">My library</a>
             </li>
             <li th:classappend="${#httpServletRequest.getRequestURI().startsWith('/avail_libraries') ? 'active':''}"
                 class="nav-item">

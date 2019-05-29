@@ -1,15 +1,13 @@
 package com.jacek.librarysystem.service;
 
 import com.jacek.librarysystem.dto.ReadingStats;
-import com.jacek.librarysystem.model.Book;
-import com.jacek.librarysystem.model.BookInLibrary;
-import com.jacek.librarysystem.model.Reading;
-import com.jacek.librarysystem.model.User;
+import com.jacek.librarysystem.exception.BookDoesNotExistException;
+import com.jacek.librarysystem.model.*;
 import com.jacek.librarysystem.repository.BookInLibraryRepository;
 import com.jacek.librarysystem.repository.BookRepository;
+import com.jacek.librarysystem.repository.HireRepository;
 import com.jacek.librarysystem.repository.ReadingRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +27,8 @@ public class BooksServiceImpl implements BooksService {
 
     private final ReadingRepository readingRepository;
 
+    private final HireRepository hireRepository;
+
     @Override
     public List<Book> getAllBooks() {
         return bookRepository.findAll();
@@ -35,14 +36,20 @@ public class BooksServiceImpl implements BooksService {
 
     @Override
     public List<BookInLibrary> getAllBooksInLibrary(User user) {
-        return bookInLibraryRepository.findAllByLibraryOwner(user);
+        return bookInLibraryRepository.findAllByBookOwner(user)
+                .stream()
+                .map(b -> {
+                    b.setUpHires();
+                    return b;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public void addBookToLibrary(User loggedUser, Long bookId) {
         Book book = bookRepository.findById(bookId).get();
-        BookInLibrary bookInLibrary = BookInLibrary.builder().book(book).libraryOwner(loggedUser).build();
+        BookInLibrary bookInLibrary = BookInLibrary.builder().book(book).bookOwner(loggedUser).build();
         bookInLibraryRepository.save(bookInLibrary);
     }
 
@@ -83,5 +90,32 @@ public class BooksServiceImpl implements BooksService {
             return null;
         }
     }
+
+    @Override
+    public List<BookInLibrary> getBoorowedBooks(User user) {
+        List<Hire> userHires = hireRepository.findAllByBorrowerAndEndDateIsNull(user);
+        List<BookInLibrary> books = userHires
+                .stream()
+                .map(Hire::getBookInLibrary)
+                .map(b -> {
+                    b.setUpHires();
+                    return b;
+                })
+                .collect(Collectors.toList());
+        return books;
+    }
+
+    @Override
+    public BookInLibrary getBookInLibraryById(Long id) {
+        return bookInLibraryRepository.findById(id).orElseThrow(() -> new BookDoesNotExistException());
+    }
+
+    @Override
+    public List<Hire> getHiringHistory(BookInLibrary book) {
+        List<Hire> hires = hireRepository.findAllByBookInLibrary(book);
+        hires.sort(Comparator.comparing(Hire::getStartDate));
+        return hireRepository.findAllByBookInLibrary(book);
+    }
+
 
 }

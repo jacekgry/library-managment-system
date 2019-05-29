@@ -8,6 +8,10 @@
     </head>
 <body th:include="layout :: body" th:with="content=~{::content}">
 <div th:fragment="content">
+    <div class="row">
+        <div style="color: red" th:text="${error}"></div>
+    </div>
+
     <form name="f" th:action="@{/login}" method="post">
         <fieldset>
             <legend>Please Login</legend>

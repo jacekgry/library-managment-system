@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Book from library</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
+          rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div th:replace="navbar::navbarinclude"></div>
+    <div class="container">
+        <form class="form-horizontal">
+            <div class="form-group row">
+                <label class="control-label col-sm-2">Id: </label>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.id}" class="form-control-static"></p></div>
+            </div>
+            <div class="form-group row">
+                <label class="control-label col-sm-2">Title: </label>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.book.title}" class="form-control-static"></p></div>
+            </div>
+            <div class="form-group row">
+                <label class="control-label col-sm-2">Pages: </label>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.book.author}" class="form-control-static"></p></div>
+            </div>
+            <div class="form-group row">
+                <label class="control-label col-sm-2">Borrowed from outside: </label>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.borrowedFromOutside}" class="form-control-static"></p></div>
+            </div>
+            <div class="form-group row">
+                <label class="control-label col-sm-2">Lent to outside: </label>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.lentToOutside}" class="form-control-static"></p></div>
+            </div>
+            <div class="form-group row" th:if="${bookInLibrary.borrowedFrom != null}">
+                <label class="control-label col-sm-2">Borrowed from: </label>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.borrowedFrom}" class="form-control-static"></p></div>
+            </div>
+            <div class="form-group row" th:if="${bookInLibrary.lentTo != null}">
+                <label class="control-label col-sm-2">Lent to: </label>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.lentTo}" class="form-control-static"></p></div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3"><a th:href="${'/hiring?id=' + bookInLibrary.id}" role="button"
+                                         class="btn btn-success">Show this book hiring history</a></div>
+            </div>
+
+        </form>
+    </div>
+</div>
+</body>
+</html>

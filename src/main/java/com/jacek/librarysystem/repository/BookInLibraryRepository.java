@@ -9,6 +9,6 @@ import java.util.List;
 
 public interface BookInLibraryRepository extends JpaRepository<BookInLibrary, Long> {
 
-    List<BookInLibrary> findAllByLibraryOwner(User libraryOwner);
+    List<BookInLibrary> findAllByBookOwner(User bookOwner);
 
 }

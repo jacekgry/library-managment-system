@@ -11,6 +11,7 @@ import java.time.Period;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -30,21 +31,23 @@ public class User {
 
     private boolean ownsLibrary;
 
-    @ManyToMany( cascade = CascadeType.ALL)
-    @JoinTable(name="lib_right",
-                joinColumns = {@JoinColumn(name="owner")},
-                inverseJoinColumns = {@JoinColumn(name="guest")})
-    private Set<User> usersWhoGaveAccessToTheirLibrary;
+    @OneToMany(mappedBy = "guest")
+    private Set<InvitationToLibrary> invitationsReceived;
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name="lib_right",
-            joinColumns = {@JoinColumn(name="guest")},
-            inverseJoinColumns = {@JoinColumn(name="owner")})
-    private Set<User> usersGivenAccess;
+    @OneToMany(mappedBy = "owner")
+    private Set<InvitationToLibrary> invitationsSent;
 
     @Temporal(TemporalType.DATE)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date registrationDate;
+
+    public Set<User> getAccessibleUsers(){
+        return
+                invitationsReceived.stream()
+                .filter(InvitationToLibrary::isConfirmed)
+                .map(InvitationToLibrary::getOwner)
+                .collect(Collectors.toSet());
+    }
 
     public LocalDate getRegisteredAsLocalDate(){
         return new java.sql.Date(getRegistrationDate().getTime()).toLocalDate();

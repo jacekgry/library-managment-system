@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Data
@@ -23,7 +24,7 @@ public class BookInLibrary {
 
     @ManyToOne
     @JoinColumn(name = "user")
-    private User libraryOwner;
+    private User bookOwner;
 
     @ManyToOne
     @JoinColumn(name = "book")
@@ -35,4 +36,31 @@ public class BookInLibrary {
     @OneToMany(mappedBy = "bookInLibrary")
     private List<Hire> hires;
 
+    @Transient
+    private boolean borrowedFromOutside;
+
+    @Transient
+    private boolean lentToOutside;
+
+    @Transient
+    private User borrowedFrom;
+
+    @Transient
+    private User lentTo;
+
+    public void setUpHires() {
+        Optional<Hire> hireOptional = this.hires.stream()
+                .filter(h -> h.getEndDate() != null)
+                .findFirst();
+        if (hireOptional.isPresent()) {
+            Hire hire = hireOptional.get();
+            if (hire.getBorrower() == null) {
+                this.lentToOutside = true;
+            } else if (hire.getBorrower().equals(this.bookOwner)) {
+                this.borrowedFromOutside = true;
+            } else {
+                this.lentTo = hire.getBorrower();
+            }
+        }
+    }
 }
