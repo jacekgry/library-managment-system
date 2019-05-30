@@ -17,7 +17,6 @@ import java.util.Optional;
 @AllArgsConstructor
 public class BookInLibrary {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -36,6 +35,9 @@ public class BookInLibrary {
     @OneToMany(mappedBy = "bookInLibrary")
     private List<Hire> hires;
 
+    @OneToMany(mappedBy="book")
+    private List<Reading> readings;
+
     @Transient
     private boolean borrowedFromOutside;
 
@@ -47,6 +49,9 @@ public class BookInLibrary {
 
     @Transient
     private User lentTo;
+
+    @Transient
+    private boolean beingRead;
 
     public void setUpHires() {
         Optional<Hire> hireOptional = this.hires.stream()
@@ -62,5 +67,13 @@ public class BookInLibrary {
                 this.lentTo = hire.getBorrower();
             }
         }
+    }
+
+    @PostLoad
+    public void checkIfIsBeingRead(){
+        this.beingRead =
+                this.readings.stream()
+                .filter(r -> r.getEndDate() == null)
+                .count() > 0;
     }
 }

@@ -3,16 +3,14 @@ package com.jacek.librarysystem.service;
 import com.jacek.librarysystem.dto.ReadingStats;
 import com.jacek.librarysystem.exception.BookDoesNotExistException;
 import com.jacek.librarysystem.model.*;
-import com.jacek.librarysystem.repository.BookInLibraryRepository;
-import com.jacek.librarysystem.repository.BookRepository;
-import com.jacek.librarysystem.repository.HireRepository;
-import com.jacek.librarysystem.repository.ReadingRepository;
+import com.jacek.librarysystem.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +26,8 @@ public class BooksServiceImpl implements BooksService {
     private final ReadingRepository readingRepository;
 
     private final HireRepository hireRepository;
+
+    private final CommentRepository commentRepository;
 
     @Override
     public List<Book> getAllBooks() {
@@ -92,7 +92,7 @@ public class BooksServiceImpl implements BooksService {
     }
 
     @Override
-    public List<BookInLibrary> getBoorowedBooks(User user) {
+    public List<BookInLibrary> getBorrowedBooks(User user) {
         List<Hire> userHires = hireRepository.findAllByBorrowerAndEndDateIsNull(user);
         List<BookInLibrary> books = userHires
                 .stream()
@@ -115,6 +115,24 @@ public class BooksServiceImpl implements BooksService {
         List<Hire> hires = hireRepository.findAllByBookInLibrary(book);
         hires.sort(Comparator.comparing(Hire::getStartDate));
         return hireRepository.findAllByBookInLibrary(book);
+    }
+
+    @Override
+    @Transactional
+    public void toggleBook(User user, Long bookId) {
+        BookInLibrary book = bookInLibraryRepository.findById(bookId).orElseThrow(BookDoesNotExistException::new);
+        List<Reading> bookReadings = readingRepository.findAllByUserAndBook(user, book);
+
+    }
+
+    @Override
+    public void addComment(BookInLibrary book, String content) {
+        Comment comment = Comment.builder()
+                .bookInLibrary(book)
+                .content(content)
+                .date(new Date())
+                .build();
+        commentRepository.save(comment);
     }
 
 

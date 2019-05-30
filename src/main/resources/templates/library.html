@@ -6,56 +6,227 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
           rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+          integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+
+
+    <style>
+
+    </style>
+
+
 </head>
 <body>
 <div class="container">
     <div th:replace="navbar::navbarinclude"></div>
 
-    <div style="margin: 10px" class="row" th:if="${owner}">
-        <form class="form-inline col-sm-5 " th:action="@{/grant_access}" th:method="post">
-            <input class="form-control" type="text" placeholder="username" th:name="username">
-            <input class="btn btn-outline-success" type="submit" value="Grant access">
-        </form>
+    <div class="row">
+        <div class="col-lg-12 col-xs-12 ">
+            <nav>
+                <div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
+                    <a class="nav-item nav-link active" id="nav-books-tab" data-toggle="tab" href="#nav-books"
+                       role="tab"
+                       aria-controls="nav-books" aria-selected="true">Books</a>
+                    <a class="nav-item nav-link" id="nav-borrowed-tab" data-toggle="tab" href="#nav-borrowed" role="tab"
+                       aria-controls="nav-borrowed" aria-selected="false">Borrowed books</a>
+                    <a class="nav-item nav-link" id="nav-collaborators-tab" data-toggle="tab" href="#nav-collaborators"
+                       role="tab"
+                       aria-controls="nav-contact" aria-selected="false" th:if="${owner}">Collaborators</a>
+                </div>
+            </nav>
+            <div class="tab-content py-3 px-3 px-sm-0" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-books" role="tabpanel" aria-labelledby="nav-books-tab">
+                    <h2>Books in
+                        <span th:text="${#httpServletRequest.getParameter('owner')}"
+                              th:unless="${#httpServletRequest.getParameter('owner') == null}">
+                        </span>'s
+                        library:
+                    </h2>
+
+                    <table class="table table-striped" border="1">
+                        <tr>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Pages</th>
+                            <th>Lent to</th>
+                            <th>Details</th>
+                            <th th:if="${owner}">Start/stop reading</th>
+                            <th th:if="${owner}">Lent book</th>
+                        </tr>
+
+                        <tr th:each="book_pos : ${books}">
+                            <td th:utext="${book_pos.book.title}"></td>
+                            <td th:utext="${book_pos.book.author}"></td>
+                            <td th:utext="${book_pos.book.pages}"></td>
+                            <td>
+                                <span th:if="${book_pos.lentTo != null}" th:text="${book_pos.lentTo}"></span>
+                                <span th:if="${book_pos.lentToOutside}">OUTSIDE</span>
+                            </td>
+                            <td><a th:href="${'/book_in_lib?id=' + book_pos.id}"/>Details</td>
+                            <td th:if="${owner}">
+                                <form method="POST" th:action="@{/toggle/book}">
+                                    <input type="hidden" name="id" th:value="${book_pos.id}"/>
+                                    <button type="submit" name="submit" value="value" class="link-button">
+                                        <i th:if="${book_pos.beingRead}" class="fas fa-play"></i>
+                                        <i th:unless="${book_pos.beingRead}" class="fas fa-stop"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <td th:if="${owner}">
+                                <div style="float: right"><a href="#" class="btn btn-info btn-lg" data-toggle="modal"
+                                                             data-target="#editCarModal"
+                                                             th:attr="data-car=${book_pos.book.title},data-carid=${book_pos.id}"><span
+                                        class="fas fa-arrow-circle-right"></span></a></div>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+                <div class="tab-pane fade col-lg-12" id="nav-collaborators" role="tabpanel"
+                     aria-labelledby="nav-collaborators-tab" th:if="${owner}">
+
+                    <div style="margin: 10px" class="row" th:if="${owner}">
+                        <form class="form-inline col-sm-5 " th:action="@{/grant_access}" th:method="post">
+                            <input class="form-control" type="text" placeholder="username" th:name="username">
+                            <input class="btn btn-outline-success" type="submit" value="Grant access">
+                        </form>
+                    </div>
+
+                    <table class="table table-striped col-lg-12" border="1">
+                        <tr>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Cancel access</th>
+                        </tr>
+
+                        <tr th:each="inv : ${invitations}">
+                            <td th:text="${inv.email}"></td>
+                            <td>
+                                <span th:if="${inv.confirmed}">Accepted</span>
+                                <span th:if="${!inv.confirmed}">Pending</span>
+                            </td>
+                            <td>
+                                <form method="POST" th:action="@{/cancel/access}">
+                                    <input type="hidden" name="book" th:value="${inv.id}"/>
+                                    <button type="submit" name="submit" value="value" class="link-button">Cancel
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="tab-pane fade" id="nav-borrowed" role="tabpanel" aria-labelledby="nav-collaborators-tab">
+
+                    <table class="table table-striped" border="1">
+                        <tr>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Pages</th>
+                            <th>Borrowed from</th>
+                            <th>Details</th>
+                            <th>Start/stop reading</th>
+                            <th th:if="${owner}">Return book</th>
+                        </tr>
+
+                        <tr th:each="bor : ${borrowed}">
+                            <td th:utext="${bor.book.title}"></td>
+                            <td th:utext="${bor.book.author}"></td>
+                            <td th:utext="${bor.book.pages}"></td>
+                            <td th:utext="${bor.borrowedFrom}"></td>
+                            <td><a th:href="${'/book_in_lib?id=' + bor.id}"/>Details</td>
+                            <td>
+                                <form method="POST" th:action="@{/toogle/book}">
+                                    <input type="hidden" name="id" th:value="${bor.id}"/>
+                                    <button type="submit" name="submit" value="value" class="link-button">
+                                    </button>
+                                </form>
+                            </td>
+                            <td th:if="${owner}">
+                                <form method="POST" th:action="@{/return/book}">
+                                    <input type="hidden" name="id" th:value="${bor.id}"/>
+                                    <button type="submit" name="submit" value="value" class="link-button">Return
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>
     </div>
+
 
     <div class="row">
-        <h2>Books in
-            <span th:text="${#httpServletRequest.getParameter('owner')}"
-                 th:unless="${#httpServletRequest.getParameter('owner') == null}">
-                Show some error msg
-            </span>'s
-             library:
-        </h2>
+
     </div>
 
-    <div>
-        <table class="table table-striped" border="1">
 
-            <tr>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Pages</th>
-                <th>Borrowed from</th>
-                <th>Details</th>
-                <th th:if="${owner}">Delete from my library</th>
-            </tr>
+</div>
 
-            <tr th:each="book_pos : ${books}">
-                <td th:utext="${book_pos.book.title}"></td>
-                <td th:utext="${book_pos.book.author}"></td>
-                <td th:utext="${book_pos.book.pages}"></td>
-                <td>USER</td>
-                <td><a th:href="${'/book_in_lib?id=' + book_pos.id}"/>Details</td>
-                <td th:if="${owner}">
-                    <form method="POST" th:action="@{/delete_from_my_lib}">
-                        <input type="hidden" name="id" th:value="${book_pos.id}"/>
-                        <button type="submit" name="submit" value="value" class="link-button">Delete</button>
-                    </form>
-                </td>
-            </tr>
 
-        </table>
+<div class="modal fade" id="editCarModal" tabindex="-1" role="dialog" aria-labelledby="editCarModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCarModalLabel">Lent book</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form th:action="@{/cardealership/updatestock}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <h5 class="car-name">Book:</h5>
+                    </div>
+
+                    <div class="form-check row">
+                        <input type="checkbox" class="form-check-input" id="exampleCheck1" name="outside">
+                        <label class="form-check-label" for="exampleCheck1">Outside</label>
+                    </div>
+
+                    <div class="row form-group">
+                        <label class="col-sm-3 col-form-label">Lent to:</label>
+                        <!--<input type="number" min="0" id="quantity" class="col-sm-2 form-control" name="userId">-->
+                        <select name="userId"
+                                class="form-control">
+                            <option th:each="u: ${users}" th:value="${u.username}"
+                                    th:text="${u.username}"></option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" id="bookId" name="bookId">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <input type="submit" value="Submit"/>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+
+<script>
+    $('#editCarModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget)
+        var car = button.data('car')
+        var bookId = button.data('carid')
+
+        var modal = $(this)
+        modal.find('.car-name').text('Book: ' + car)
+        document.getElementById("bookId").value = bookId
+    })
+</script>
+
+
 </body>
 </html>

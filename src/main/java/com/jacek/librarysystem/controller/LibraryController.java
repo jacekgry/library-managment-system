@@ -1,6 +1,5 @@
 package com.jacek.librarysystem.controller;
 
-import com.jacek.librarysystem.model.BookInLibrary;
 import com.jacek.librarysystem.model.User;
 import com.jacek.librarysystem.security.SecurityService;
 import com.jacek.librarysystem.service.BooksService;
@@ -26,7 +25,7 @@ public class LibraryController {
 
     @GetMapping(value = "avail_libraries")
     public String availLibraries(Model model) {
-        Set<User> availLibrariesOwners = userService.findUsersWhoGaveAccessTo(securityService.findLoggedInUser());
+        Set<User> availLibrariesOwners = userService.findUsersWhoGaveAccessToTheirLibrariesAndConfirmed(securityService.findLoggedInUser());
         model.addAttribute("users", availLibrariesOwners);
         return "avail_libraries";
     }
@@ -50,23 +49,12 @@ public class LibraryController {
                 securityService.findLoggedInUser().getAccessibleUsers().contains(user)) {
             model.addAttribute("books", booksService.getAllBooksInLibrary(user));
             model.addAttribute("owner", securityService.findLoggedInUsername().equals(username));
+            model.addAttribute("invitations", userService.findSentInvitations(user));
+            model.addAttribute("borrowed", booksService.getBorrowedBooks(user));
+            model.addAttribute("users", userService.findAllByUsernameIsNotAndConfirmed(securityService.findLoggedInUsername(), true));
             return "library";
         } else {
             throw new AccessDeniedException("You have no access to this library");
         }
     }
-
-    @GetMapping(value = "/book_in_lib")
-    public String bookInLibrary(Model model, @RequestParam(name = "id") Long id) {
-        BookInLibrary book = booksService.getBookInLibraryById(id);
-        if (securityService.findLoggedInUser().equals(book.getBookOwner())
-                || securityService.findLoggedInUser().getAccessibleUsers().contains(book.getBookOwner())) {
-            model.addAttribute("bookInLibrary", book);
-            model.addAttribute("owner", securityService.findLoggedInUser().equals(book.getBookOwner()));
-            return "book_in_lib";
-        } else {
-            throw new AccessDeniedException("You have no access to this book");
-        }
-    }
-
 }

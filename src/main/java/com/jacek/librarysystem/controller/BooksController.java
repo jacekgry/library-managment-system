@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.persistence.Access;
 import java.util.List;
 
 @Controller
@@ -60,6 +61,35 @@ public class BooksController {
             model.addAttribute("book", book);
             return "hiring_hist";
         }
-        throw new AccessDeniedException("You have to right to this book");
+        throw new AccessDeniedException("You have no right to this book");
     }
+
+    @PostMapping(value = "toggle/book")
+    public String toggleBook(@RequestParam(name = "id") Long id) {
+        return "redirect:/library?owner=" + securityService.findLoggedInUser();
+    }
+
+    @PostMapping(value = "comment")
+    public String comment(@RequestParam(name = "bookId") Long bookId, @RequestParam(name = "content") String content) {
+        BookInLibrary book = booksService.getBookInLibraryById(bookId);
+        if (securityService.findLoggedInUser().equals(book.getBookOwner())){
+            booksService.addComment(book, content);
+            return "redirect:/book_in_lib?id=" + bookId;
+        }
+        throw new AccessDeniedException("You cannot comment this book");
+    }
+
+    @GetMapping(value = "/book_in_lib")
+    public String bookInLibrary(Model model, @RequestParam(name = "id") Long id) {
+        BookInLibrary book = booksService.getBookInLibraryById(id);
+        if (securityService.findLoggedInUser().equals(book.getBookOwner())
+                || securityService.findLoggedInUser().getAccessibleUsers().contains(book.getBookOwner())) {
+            model.addAttribute("bookInLibrary", book);
+            model.addAttribute("owner", securityService.findLoggedInUser().equals(book.getBookOwner()));
+            return "book_in_lib";
+        } else {
+            throw new AccessDeniedException("You have no access to this book");
+        }
+    }
+
 }

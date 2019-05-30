@@ -71,6 +71,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<User> findAllByUsernameIsNotAndConfirmed(String username, boolean confirmed) {
+        return userRepository.findAllByUsernameIsNotAndConfirmed(username, confirmed);
+    }
+
+    @Override
     @Transactional
     public void confirmEmail(String token) {
         VerificationToken verificationToken = verificationTokenRepository
@@ -96,7 +101,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Set<User> findUsersWhoGaveAccessTo(User user) {
+    public Set<User> findUsersWhoGaveAccessToTheirLibrariesAndConfirmed(User user) {
         return user.getInvitationsReceived()
                 .stream()
                 .filter(InvitationToLibrary::isConfirmed)
@@ -104,6 +109,10 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toSet());
     }
 
+    @Override
+    public Set<InvitationToLibrary> findSentInvitations(User user) {
+        return user.getInvitationsSent();
+    }
 
     private void generateTokenAndSendConfirmationEmail(User user) {
         String token = UUID.randomUUID().toString();

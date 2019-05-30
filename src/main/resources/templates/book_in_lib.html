@@ -6,6 +6,19 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
           rel="stylesheet">
+
+    <style>
+        .user_name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .comments-list .media {
+            border-bottom: 1px dotted #ccc;
+        }
+    </style>
+
+
 </head>
 <body>
 <div class="container">
@@ -26,11 +39,13 @@
             </div>
             <div class="form-group row">
                 <label class="control-label col-sm-2">Borrowed from outside: </label>
-                <div class="col-sm-10"><p th:text="${bookInLibrary.borrowedFromOutside}" class="form-control-static"></p></div>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.borrowedFromOutside}"
+                                          class="form-control-static"></p></div>
             </div>
             <div class="form-group row">
                 <label class="control-label col-sm-2">Lent to outside: </label>
-                <div class="col-sm-10"><p th:text="${bookInLibrary.lentToOutside}" class="form-control-static"></p></div>
+                <div class="col-sm-10"><p th:text="${bookInLibrary.lentToOutside}" class="form-control-static"></p>
+                </div>
             </div>
             <div class="form-group row" th:if="${bookInLibrary.borrowedFrom != null}">
                 <label class="control-label col-sm-2">Borrowed from: </label>
@@ -44,9 +59,44 @@
                 <div class="col-sm-3"><a th:href="${'/hiring?id=' + bookInLibrary.id}" role="button"
                                          class="btn btn-success">Show this book hiring history</a></div>
             </div>
-
         </form>
     </div>
+
+    <div class="media mt-3 shadow-textarea" th:if="${owner}">
+        <div class="media-body">
+            <form method="POST" th:action="@{/comment}">
+                <div class="form-group basic-textarea rounded-corners">
+                    <input type="hidden" name="bookId" th:value="${bookInLibrary.id}"/>
+                    <textarea name="content" class="form-control z-depth-1" id="exampleFormControlTextarea345" rows="3"
+                              placeholder="Write your comment..."></textarea>
+                    <button type="submit" name="submit" value="value" class="link-button">Comment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="page-header">
+        <h1><span th:text="${#lists.size(bookInLibrary.comments)}"></span>
+            comment<span th:if="${#lists.size(bookInLibrary.comments)} != 1">s</span>
+        </h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="comments-list">
+                <div class="media" th:each="c : ${bookInLibrary.comments}">
+                    <div class="media-body">
+                        <h4 class="media-heading user_name" th:text="${bookInLibrary.bookOwner.username}"></h4>
+                        <span th:text="${c.content}"></span>
+                    </div>
+                    <p class="float-right">
+                        <small><span th:text="${c.date}"></span></small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>
