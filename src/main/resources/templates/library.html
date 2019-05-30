@@ -55,7 +55,8 @@
                             <th>Lent to</th>
                             <th>Details</th>
                             <th th:if="${owner}">Start/stop reading</th>
-                            <th th:if="${owner}">Lent book</th>
+                            <th th:if="${owner}">Lend book</th>
+                            <th th:if="${owner}">Mark as returned</th>
                         </tr>
 
                         <tr th:each="book_pos : ${books}">
@@ -63,24 +64,32 @@
                             <td th:utext="${book_pos.book.author}"></td>
                             <td th:utext="${book_pos.book.pages}"></td>
                             <td>
-                                <span th:if="${book_pos.lentTo != null}" th:text="${book_pos.lentTo}"></span>
+                                <span th:if="${book_pos.lentTo != null}" th:text="${book_pos.lentTo.username}"></span>
                                 <span th:if="${book_pos.lentToOutside}">OUTSIDE</span>
                             </td>
                             <td><a th:href="${'/book_in_lib?id=' + book_pos.id}"/>Details</td>
                             <td th:if="${owner}">
-                                <form method="POST" th:action="@{/toggle/book}">
+                                <form method="POST" th:if="${book_pos.onOwnersShelf}" th:action="@{/toggle/book}">
                                     <input type="hidden" name="id" th:value="${book_pos.id}"/>
                                     <button type="submit" name="submit" value="value" class="link-button">
-                                        <i th:if="${book_pos.beingRead}" class="fas fa-play"></i>
-                                        <i th:unless="${book_pos.beingRead}" class="fas fa-stop"></i>
+                                        <i th:if="${!book_pos.beingRead}" class="fas fa-play"></i>
+                                        <i th:unless="${!book_pos.beingRead}" class="fas fa-stop"></i>
                                     </button>
                                 </form>
                             </td>
                             <td th:if="${owner}">
-                                <div style="float: right"><a href="#" class="btn btn-info btn-lg" data-toggle="modal"
+                                <div th:if="${book_pos.onOwnersShelf}" style="float: right"><a href="#" class="btn btn-info btn-lg" data-toggle="modal"
                                                              data-target="#editCarModal"
                                                              th:attr="data-car=${book_pos.book.title},data-carid=${book_pos.id}"><span
                                         class="fas fa-arrow-circle-right"></span></a></div>
+                            </td>
+                            <td th:if="${owner}">
+                                <form th:if="${!book_pos.onOwnersShelf}" method="POST" th:action="@{/return/book}">
+                                    <input type="hidden" name="bookId" th:value="${book_pos.id}"/>
+                                    <button type="submit" class="link-button">
+                                        <i class="fas fa-undo-alt"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     </table>
@@ -136,19 +145,25 @@
                             <td th:utext="${bor.book.title}"></td>
                             <td th:utext="${bor.book.author}"></td>
                             <td th:utext="${bor.book.pages}"></td>
-                            <td th:utext="${bor.borrowedFrom}"></td>
+                            <td th:utext="${bor.bookOwner}">
+                                <span th:if="${bor.bookOwner != null}" th:utext="${bor.bookOwner.username}"></span>
+                                <span th:if="${bor.borrowedFromOutside}" th:utext="${'OUTSIDE'}"></span>
+                            </td>
                             <td><a th:href="${'/book_in_lib?id=' + bor.id}"/>Details</td>
                             <td>
-                                <form method="POST" th:action="@{/toogle/book}">
+                                <form method="POST" th:action="@{/toggle/book}">
                                     <input type="hidden" name="id" th:value="${bor.id}"/>
                                     <button type="submit" name="submit" value="value" class="link-button">
+                                        <i th:if="${!bor.beingRead}" class="fas fa-play"></i>
+                                        <i th:unless="${!bor.beingRead}" class="fas fa-stop"></i>
                                     </button>
                                 </form>
                             </td>
                             <td th:if="${owner}">
                                 <form method="POST" th:action="@{/return/book}">
-                                    <input type="hidden" name="id" th:value="${bor.id}"/>
-                                    <button type="submit" name="submit" value="value" class="link-button">Return
+                                    <input type="hidden" name="bookId" th:value="${bor.id}"/>
+                                    <button type="submit" class="link-button">
+                                        <i class="fas fa-undo-alt"></i>
                                     </button>
                                 </form>
                             </td>
@@ -181,21 +196,20 @@
                 </button>
             </div>
 
-            <form th:action="@{/cardealership/updatestock}" method="post">
+            <form th:action="@{/lent/book}" method="post">
                 <div class="modal-body">
                     <div class="form-group">
                         <h5 class="car-name">Book:</h5>
                     </div>
 
                     <div class="form-check row">
-                        <input type="checkbox" class="form-check-input" id="exampleCheck1" name="outside">
-                        <label class="form-check-label" for="exampleCheck1">Outside</label>
+                        <input type="checkbox" class="form-check-input" id="outsideCheckbox" name="outside" value="1">
+                        <label class="form-check-label" for="outsideCheckbox">Outside</label>
                     </div>
 
-                    <div class="row form-group">
-                        <label class="col-sm-3 col-form-label">Lent to:</label>
-                        <!--<input type="number" min="0" id="quantity" class="col-sm-2 form-control" name="userId">-->
-                        <select name="userId"
+                    <div class="row form-group" id="selectUser">
+                        <label class="col-sm-3 col-form-label">Lend to:</label>
+                        <select name="username"
                                 class="form-control">
                             <option th:each="u: ${users}" th:value="${u.username}"
                                     th:text="${u.username}"></option>
@@ -223,8 +237,19 @@
 
         var modal = $(this)
         modal.find('.car-name').text('Book: ' + car)
+        console.log('book id: ' + bookId)
         document.getElementById("bookId").value = bookId
     })
+
+    $("#outsideCheckbox").change(function () {
+        if (this.checked) {
+            $("#selectUser").hide()
+        }
+        else {
+            $("#selectUser").show()
+
+        }
+    });
 </script>
 
 

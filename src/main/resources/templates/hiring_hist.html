@@ -23,7 +23,9 @@
             </tr>
 
             <tr th:each="hire : ${hires}">
-                <td th:utext="${hire.borrower}"></td>
+                <td>
+                    <span th:if="${hire.borrower != null}" th:utext="${hire.borrower.username}"></span>
+                </td>
                 <td th:utext="${hire.outside}"></td>
                 <td th:utext="${hire.startDate}"></td>
                 <td th:utext="${hire.endDate}"></td>

@@ -8,6 +8,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
@@ -53,16 +54,17 @@ public class User {
         return new java.sql.Date(getRegistrationDate().getTime()).toLocalDate();
     }
 
-    public int getDaysSinceRegistration(){
-        return Period.between(LocalDate.now(), getRegisteredAsLocalDate()).getDays();
+    public long getDaysSinceRegistration(){
+//        return Period.between(getRegisteredAsLocalDate(), LocalDate.now()).
+        return ChronoUnit.DAYS.between(getRegisteredAsLocalDate(), LocalDate.now());
     }
 
     public int getMonthsSinceRegistration(){
-        return Period.between(LocalDate.now(), getRegisteredAsLocalDate()).getMonths();
+        return Period.between(getRegisteredAsLocalDate(), LocalDate.now()).getMonths();
     }
 
     public int getYearsSinceRegistration(){
-        return Period.between(LocalDate.now(), getRegisteredAsLocalDate()).getYears();
+        return Period.between(getRegisteredAsLocalDate(), LocalDate.now()).getYears();
     }
 
     @Override

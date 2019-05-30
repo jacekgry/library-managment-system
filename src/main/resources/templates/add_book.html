@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org>">
+<head>
+    <meta charset="UTF-8">
+    <title>Add book</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
+          rel="stylesheet">
+    <script type="text/javascript" src="//code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div th:replace="navbar::navbarinclude"></div>
+
+    <form action="#" th:action="@{/add/book}" th:object="${book}" method="post">
+        <input type="hidden" th:field="*{id}">
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label" for="titleInput">Title: </label>
+            <input type="text" id="titleInput" class="form-control col-sm-6" th:field="*{title}">
+            <label class="col-sm-4" style="color: red" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Title Error</label>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label" for="authorInput">Author: </label>
+            <input type="text" id="authorInput" class="form-control col-sm-2" th:field="*{author}">
+            <label class="col-sm-8" style="color: red" th:if="${#fields.hasErrors('author')}" th:errors="*{author}">Author error</label>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-sm-2 col-form-label" for="pagesInput">Pages: </label>
+            <input type="number" min="1" id="pagesInput" class="form-control col-sm-2" th:field="*{pages}">
+            <label class="col-sm-8" style="color: red" th:if="${#fields.hasErrors('pages')}" th:errors="*{pages}">Pages error</label>
+        </div>
+        <p><input type="submit" value="Submit"/> <input type="reset" value="Reset"/></p>
+    </form>
+</div>
+</body>
+</html>

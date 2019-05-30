@@ -10,6 +10,8 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
           rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -26,7 +28,7 @@
     </div>
 
     <div class="row">
-        <span>Average pages read per month: </span>
+        <span>Average pages read per day: </span>
         <span th:text="${stats.avgPagesPerDay}"></span>
     </div>
 
@@ -34,6 +36,63 @@
         <span>Last read book: </span>
         <a th:href="${'/book/' + lastBook.id}" th:text="${lastBook.title}"></a>
     </div>
+
+
+    <div class="card">
+        <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#beingRead">Books being read</button>
+        <div id="beingRead" class="collapse">
+            <table class="table table-striped" border="1">
+                <tr>
+                    <th>Title</th>
+                    <th>Started</th>
+                </tr>
+                <tr th:each="r : ${reads}">
+                    <td th:utext="${r.book.book.title}"></td>
+                    <td th:utext="${r.startDate}">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#lent">Books you lent</button>
+        <div id="lent" class="collapse">
+            <table class="table table-striped" border="1">
+                <tr>
+                    <th>Title</th>
+                    <th>Lent to</th>
+                </tr>
+                <tr th:each="l : ${lent}">
+                    <td th:utext="${l.book.title}"></td>
+                    <td>
+                        <span th:if="${l.lentTo != null}" th:text="${l.lentTo.username}"></span>
+                        <span th:if="${l.lentToOutside}">OUTSIDE</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#borrowed">Books you borrowed</button>
+        <div id="borrowed" class="collapse">
+            <table class="table table-striped" border="1">
+                <tr>
+                    <th>Title</th>
+                    <th>Borrowed from</th>
+                </tr>
+                <tr th:each="bor : ${borrowed}">
+                    <td th:utext="${bor.book.title}"></td>
+                    <td>
+                        <span th:if="${bor.bookOwner != null}" th:utext="${bor.bookOwner.username}"></span>
+                        <span th:if="${bor.borrowedFromOutside}" th:utext="${'OUTSIDE'}"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
 
 </div>
 </body>

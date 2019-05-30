@@ -1,14 +1,18 @@
 package com.jacek.librarysystem.service;
 
 import com.jacek.librarysystem.dto.ReadingStats;
+import com.jacek.librarysystem.exception.BookAlreadyLentException;
 import com.jacek.librarysystem.exception.BookDoesNotExistException;
+import com.jacek.librarysystem.exception.HireNotFoundException;
+import com.jacek.librarysystem.exception.HireToNobodyException;
 import com.jacek.librarysystem.model.*;
 import com.jacek.librarysystem.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -29,6 +33,8 @@ public class BooksServiceImpl implements BooksService {
 
     private final CommentRepository commentRepository;
 
+    private final UserRepository userRepository;
+
     @Override
     public List<Book> getAllBooks() {
         return bookRepository.findAll();
@@ -36,13 +42,7 @@ public class BooksServiceImpl implements BooksService {
 
     @Override
     public List<BookInLibrary> getAllBooksInLibrary(User user) {
-        return bookInLibraryRepository.findAllByBookOwner(user)
-                .stream()
-                .map(b -> {
-                    b.setUpHires();
-                    return b;
-                })
-                .collect(Collectors.toList());
+        return bookInLibraryRepository.findAllByBookOwner(user);
     }
 
     @Override
@@ -68,9 +68,9 @@ public class BooksServiceImpl implements BooksService {
                 .count();
 
         return ReadingStats.builder()
-                .avgBooksPerMonth(user.getMonthsSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal(books / user.getMonthsSinceRegistration()).setScale(2))
-                .avgBooksPerYear(user.getYearsSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal(books / user.getYearsSinceRegistration()).setScale(2))
-                .avgPagesPerDay(user.getDaysSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal(pages / user.getDaysSinceRegistration()).setScale(2))
+                .avgBooksPerMonth(user.getMonthsSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double)books / user.getMonthsSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
+                .avgBooksPerYear(user.getYearsSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double)books / user.getYearsSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
+                .avgPagesPerDay(user.getDaysSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double)pages / user.getDaysSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
                 .build();
     }
 
@@ -97,10 +97,6 @@ public class BooksServiceImpl implements BooksService {
         List<BookInLibrary> books = userHires
                 .stream()
                 .map(Hire::getBookInLibrary)
-                .map(b -> {
-                    b.setUpHires();
-                    return b;
-                })
                 .collect(Collectors.toList());
         return books;
     }
@@ -119,13 +115,26 @@ public class BooksServiceImpl implements BooksService {
 
     @Override
     @Transactional
-    public void toggleBook(User user, Long bookId) {
+    public void toggleBook(User user, Long bookId) throws AccessDeniedException {
         BookInLibrary book = bookInLibraryRepository.findById(bookId).orElseThrow(BookDoesNotExistException::new);
-        List<Reading> bookReadings = readingRepository.findAllByUserAndBook(user, book);
-
+        if (book.isOnOwnersShelf() && book.getBookOwner().equals(user) || book.getLentTo().equals(user)) {
+            if (book.isBeingRead()) {
+                stopAllReadings(book);
+            } else {
+                Reading reading = Reading.builder()
+                        .book(book)
+                        .startDate(new Date())
+                        .user(user)
+                        .build();
+                readingRepository.save(reading);
+            }
+        } else {
+            throw new AccessDeniedException("Book is not on your shelf!");
+        }
     }
 
     @Override
+    @Transactional
     public void addComment(BookInLibrary book, String content) {
         Comment comment = Comment.builder()
                 .bookInLibrary(book)
@@ -135,5 +144,88 @@ public class BooksServiceImpl implements BooksService {
         commentRepository.save(comment);
     }
 
+    @Override
+    @Transactional
+    public void lentBook(BookInLibrary book, String username, boolean outside) {
+        User borrower = userRepository.findByUsername(username).orElse(null);
+        if (outside) borrower = null;
+        if (borrower == null && !outside) {
+            throw new HireToNobodyException("You have to specify who you lent the book to or lent it outside");
+        }
 
+        List<Hire> hires = book.getHires()
+                .stream()
+                .filter(h -> h.getEndDate() == null)
+                .collect(Collectors.toList());
+
+        if (hires.size() > 0) {
+            throw new BookAlreadyLentException(hires.get(0).getBorrower().getUsername(), hires.get(0).isOutside());
+        }
+
+        stopAllReadings(book);
+
+        Hire hire = Hire.builder()
+                .bookInLibrary(book)
+                .borrower(borrower)
+                .startDate(new Date())
+                .outside(outside)
+                .build();
+        hireRepository.save(hire);
+    }
+
+    @Override
+    @Transactional
+    public void returnBook(User user, Long bookId) throws AccessDeniedException {
+        BookInLibrary book = bookInLibraryRepository.findById(bookId)
+                .orElseThrow(BookDoesNotExistException::new);
+        Hire hire = book.getHires().stream()
+                .filter(h -> h.getEndDate() == null)
+                .findFirst().orElseThrow(HireNotFoundException::new);
+        if (!user.equals(book.getBookOwner()) && !user.equals(hire.getBorrower())) {
+            throw new AccessDeniedException("You have no right to return this book");
+        } else {
+            stopAllReadings(book);
+            hire.setEndDate(new Date());
+            hireRepository.save(hire);
+        }
+    }
+
+    @Override
+    public List<Reading> getCurrentReads(User loggedInUser) {
+        return readingRepository.getAllByUser(loggedInUser)
+                .stream()
+                .filter(r -> r.getEndDate() == null)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BookInLibrary> getLentBooks(User loggedInUser) {
+        return bookInLibraryRepository.findAllByBookOwner(loggedInUser)
+                .stream()
+                .filter(b -> !b.isOnOwnersShelf())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void createBook(Book book) {
+        bookRepository.save(book);
+    }
+
+    @Override
+    public Book searchForPossibleDuplicate(Book book){
+//        bookRepository.findAllBy
+
+        return null;
+    }
+
+    private void stopAllReadings(BookInLibrary book) {
+        book.getReadings()
+                .stream()
+                .filter(r -> r.getEndDate() == null)
+                .forEach(r -> {
+                    r.setEndDate(new Date());
+                    readingRepository.save(r);
+                });
+    }
 }

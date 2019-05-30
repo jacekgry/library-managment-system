@@ -2,13 +2,10 @@ package com.jacek.librarysystem.service;
 
 
 import com.jacek.librarysystem.dto.ReadingStats;
-import com.jacek.librarysystem.model.Book;
-import com.jacek.librarysystem.model.BookInLibrary;
-import com.jacek.librarysystem.model.Hire;
-import com.jacek.librarysystem.model.User;
+import com.jacek.librarysystem.model.*;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
-import java.util.Map;
 
 public interface BooksService {
     List<Book> getAllBooks();
@@ -19,6 +16,12 @@ public interface BooksService {
     List<BookInLibrary> getBorrowedBooks(User user);
     BookInLibrary getBookInLibraryById(Long id);
     List<Hire> getHiringHistory(BookInLibrary book);
-    void toggleBook(User user, Long bookId);
+    void toggleBook(User user, Long bookId) throws AccessDeniedException;
     void addComment(BookInLibrary book, String content);
+    void lentBook(BookInLibrary book, String username, boolean outside);
+    void returnBook(User user, Long bookId) throws AccessDeniedException;
+    List<Reading> getCurrentReads(User loggedInUser);
+    List<BookInLibrary> getLentBooks(User loggedInUser);
+    void createBook(Book book);
+    Book searchForPossibleDuplicate(Book book);
 }

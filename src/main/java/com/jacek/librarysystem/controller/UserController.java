@@ -66,6 +66,9 @@ public class UserController {
         Book lastBook = booksService.getLastReadBookOfUser(securityService.findLoggedInUser());
         model.addAttribute("stats", stats);
         model.addAttribute("lastBook", lastBook);
+        model.addAttribute("borrowed", booksService.getBorrowedBooks(securityService.findLoggedInUser()));
+        model.addAttribute("reads", booksService.getCurrentReads(securityService.findLoggedInUser()));
+        model.addAttribute("lent", booksService.getLentBooks(securityService.findLoggedInUser()));
         return "home";
     }
 

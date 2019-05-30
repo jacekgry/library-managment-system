@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,17 +46,24 @@ public class BookInLibrary {
     private boolean lentToOutside;
 
     @Transient
-    private User borrowedFrom;
-
-    @Transient
     private User lentTo;
 
     @Transient
     private boolean beingRead;
 
-    public void setUpHires() {
+    @Transient
+    @Builder.Default
+    private boolean onOwnersShelf = true;
+
+    @PostLoad
+    public void setTransientFields(){
+        setUpHires();
+        checkIfIsBeingRead();
+    }
+
+    private void setUpHires() {
         Optional<Hire> hireOptional = this.hires.stream()
-                .filter(h -> h.getEndDate() != null)
+                .filter(h -> h.getEndDate() == null)
                 .findFirst();
         if (hireOptional.isPresent()) {
             Hire hire = hireOptional.get();
@@ -66,14 +74,15 @@ public class BookInLibrary {
             } else {
                 this.lentTo = hire.getBorrower();
             }
+            onOwnersShelf = false;
         }
     }
 
-    @PostLoad
-    public void checkIfIsBeingRead(){
+    private void checkIfIsBeingRead(){
         this.beingRead =
                 this.readings.stream()
                 .filter(r -> r.getEndDate() == null)
                 .count() > 0;
     }
+
 }
