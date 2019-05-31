@@ -12,7 +12,6 @@
 <body>
 <div class="container">
     <div th:replace="navbar::navbarinclude"></div>
-
     <div th:if="${duplicates != null}">
         <h2>Possible duplicates found for book you want to add. Are you sure?</h2>
         <h2>Possible duplicates:</h2>
@@ -32,29 +31,67 @@
     </div>
 
 
-
     <form action="#" th:action="@{/add/book}" th:object="${book}" method="post">
         <input type="hidden" th:field="*{id}">
         <input type="hidden" name="force" th:value="${duplicates != null}">
         <div class="form-group row">
             <label class="col-sm-2 col-form-label" for="titleInput">Title: </label>
             <input type="text" id="titleInput" class="form-control col-sm-6" th:field="*{title}">
-            <label class="col-sm-4" style="color: red" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Title Error</label>
+            <label class="col-sm-4" style="color: red" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Title
+                Error</label>
         </div>
 
         <div class="form-group row">
             <label class="col-sm-2 col-form-label" for="authorInput">Author: </label>
-            <input type="text" id="authorInput" class="form-control col-sm-2" th:field="*{author}">
-            <label class="col-sm-8" style="color: red" th:if="${#fields.hasErrors('author')}" th:errors="*{author}">Author error</label>
+            <input type="text" id="authorInput" class="form-control col-sm-6" th:field="*{author}">
+            <label class="col-sm-4" style="color: red" th:if="${#fields.hasErrors('author')}" th:errors="*{author}">Author
+                error</label>
         </div>
 
         <div class="form-group row">
             <label class="col-sm-2 col-form-label" for="pagesInput">Pages: </label>
             <input type="number" min="1" id="pagesInput" class="form-control col-sm-2" th:field="*{pages}">
-            <label class="col-sm-8" style="color: red" th:if="${#fields.hasErrors('pages')}" th:errors="*{pages}">Pages error</label>
+            <label class="col-sm-8" style="color: red" th:if="${#fields.hasErrors('pages')}" th:errors="*{pages}">Pages
+                error</label>
         </div>
         <p><input type="submit" value="Submit"/> <input type="reset" value="Reset"/></p>
     </form>
+    <div th:if="${duplicates == null}" class="row">
+        <div class="col-sm-9 form-inline">
+            <input id="link" class="form-control col-sm-8" type="search" placeholder="Google Books link"
+                   aria-label="Search">
+            <button class="btn btn-success" type="submit" onclick="getBookFromGoogle()">Get book</button>
+        </div>
+    </div>
+    <div class="row" id="googleError" style="display: none; color: red">
+        <h5>Cannot get book from this link</h5>
+    </div>
 </div>
+
+<script>
+    function getBookFromGoogle() {
+        try {
+            const link = document.getElementById("link").value;
+            const url = new URL(link);
+            const id = url.searchParams.get("id");
+            $.get("https://www.googleapis.com/books/v1/volumes/" + id, function (response) {
+                const title = response.volumeInfo.title;
+                const authors = response.volumeInfo.authors.join(", ")
+                const pages = response.volumeInfo.pageCount
+                $("#pagesInput").val(pages);
+                $("#titleInput").val(title);
+                $("#authorInput").val(authors);
+                $("#googleError").hide();
+            }).fail(function () {
+                $("#googleError").show();
+            });
+        }
+        catch (e) {
+            $("#googleError").show();
+        }
+    }
+</script>
+
+
 </body>
 </html>
