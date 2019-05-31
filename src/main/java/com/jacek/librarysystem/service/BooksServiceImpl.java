@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
@@ -36,21 +37,30 @@ public class BooksServiceImpl implements BooksService {
     private final UserRepository userRepository;
 
     @Override
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public List<Book> findBooksByTitleAndAuthor(String title, String author) {
+        return bookRepository.findByTitleIgnoreCaseContainingAndAuthorIgnoreCaseContaining(title, author);
     }
 
     @Override
-    public List<BookInLibrary> getAllBooksInLibrary(User user) {
-        return bookInLibraryRepository.findAllByBookOwner(user);
+    public List<BookInLibrary> getAllBooksInLibrary(User user, String title, String author) {
+        return bookInLibraryRepository.findByBookOwnerAndBookTitleIgnoreCaseContainingAndBookAuthorIgnoreCaseContaining(user, title, author);
     }
 
     @Override
     @Transactional
-    public void addBookToLibrary(User loggedUser, Long bookId) {
+    public void addBookToLibrary(User loggedUser, Long bookId, boolean outside) {
         Book book = bookRepository.findById(bookId).get();
-        BookInLibrary bookInLibrary = BookInLibrary.builder().book(book).bookOwner(loggedUser).build();
+        BookInLibrary bookInLibrary = BookInLibrary.builder().book(book).bookOwner(outside ? null : loggedUser).build();
         bookInLibraryRepository.save(bookInLibrary);
+        if (outside) {
+            Hire hire = Hire.builder()
+                    .outside(true)
+                    .startDate(new Date())
+                    .borrower(loggedUser)
+                    .bookInLibrary(bookInLibrary)
+                    .build();
+            hireRepository.save(hire);
+        }
     }
 
     @Override
@@ -68,9 +78,9 @@ public class BooksServiceImpl implements BooksService {
                 .count();
 
         return ReadingStats.builder()
-                .avgBooksPerMonth(user.getMonthsSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double)books / user.getMonthsSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
-                .avgBooksPerYear(user.getYearsSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double)books / user.getYearsSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
-                .avgPagesPerDay(user.getDaysSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double)pages / user.getDaysSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
+                .avgBooksPerMonth(user.getMonthsSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double) books / user.getMonthsSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
+                .avgBooksPerYear(user.getYearsSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double) books / user.getYearsSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
+                .avgPagesPerDay(user.getDaysSinceRegistration() == 0 ? BigDecimal.ZERO : new BigDecimal((double) pages / user.getDaysSinceRegistration()).setScale(2, RoundingMode.HALF_UP))
                 .build();
     }
 
@@ -213,10 +223,8 @@ public class BooksServiceImpl implements BooksService {
     }
 
     @Override
-    public Book searchForPossibleDuplicate(Book book){
-//        bookRepository.findAllBy
-
-        return null;
+    public List<Book> searchForPossibleDuplicate(Book book) {
+        return bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(book.getTitle(), book.getAuthor());
     }
 
     private void stopAllReadings(BookInLibrary book) {

@@ -3,6 +3,7 @@ package com.jacek.librarysystem.controller;
 import com.jacek.librarysystem.model.Book;
 import com.jacek.librarysystem.model.BookInLibrary;
 import com.jacek.librarysystem.model.Hire;
+import com.jacek.librarysystem.model.User;
 import com.jacek.librarysystem.security.SecurityService;
 import com.jacek.librarysystem.service.BooksService;
 import com.jacek.librarysystem.service.UserService;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Set;
 
 @Controller
 @RequiredArgsConstructor
@@ -30,16 +32,19 @@ public class BooksController {
     private final SecurityService securityService;
 
     @GetMapping(value = "/books")
-    public String books(Model model) {
-        model.addAttribute("books", booksService.getAllBooks());
+    public String books(Model model,
+                        @RequestParam(name = "title", required = false, defaultValue = "") String title,
+                        @RequestParam(name= "author", required = false, defaultValue = "") String author) {
+        Set<User> users = securityService.findLoggedInUser().getAccessibleUsers();
+        users.add(securityService.findLoggedInUser());
+
+        model.addAttribute("books", booksService.findBooksByTitleAndAuthor(title, author));
+        model.addAttribute("users", users);
+
+        model.addAttribute("title", title);
+        model.addAttribute("author", author);
+
         return "books";
-    }
-
-
-    @PostMapping(value = "add_to_my_lib")
-    public String addToMyLibrary(@RequestParam(name = "book") Long bookId) {
-        booksService.addBookToLibrary(securityService.findLoggedInUser(), bookId);
-        return "redirect:/library?owner=" + securityService.findLoggedInUser().getUsername();
     }
 
     @GetMapping(value = "add/book")
@@ -49,18 +54,35 @@ public class BooksController {
     }
 
     @PostMapping(value = "add/book")
-    public String addBook(@ModelAttribute(name = "book") @Valid Book book, BindingResult bindingResult){
-        if(bindingResult.hasErrors()){
+    public String addBook(@ModelAttribute(name = "book") @Valid Book book,
+                          BindingResult bindingResult,
+                          @RequestParam(name = "force", defaultValue = "false") Boolean force,
+                          Model model) {
+        if (bindingResult.hasErrors()) {
             return "add_book";
+        } else {
+            boolean duplicatesFound = false;
+            List<Book> duplicates = null;
+            if (!force) {
+                duplicates = booksService.searchForPossibleDuplicate(book);
+                duplicatesFound = !duplicates.isEmpty();
+            }
+            if (force || !duplicatesFound) {
+                booksService.createBook(book);
+                return "redirect:/books";
+            } else {
+                model.addAttribute("book", book);
+                model.addAttribute("duplicates", duplicates);
+                return "add_book";
+            }
         }
-        booksService.createBook(book);
-        return "redirect:/books";
     }
 
     @GetMapping(value = "hiring")
     public String hiringHistory(Model model, @RequestParam(name = "id") Long id) {
         BookInLibrary book = booksService.getBookInLibraryById(id);
         if (securityService.findLoggedInUser().equals(book.getBookOwner())
+                || book.getLentTo().equals(securityService.findLoggedInUser())
                 || book.getBookOwner().getAccessibleUsers().contains(securityService.findLoggedInUser())) {
             List<Hire> hirings = booksService.getHiringHistory(book);
             model.addAttribute("hires", hirings);
@@ -79,7 +101,7 @@ public class BooksController {
     @PostMapping(value = "comment")
     public String comment(@RequestParam(name = "bookId") Long bookId, @RequestParam(name = "content") String content) {
         BookInLibrary book = booksService.getBookInLibraryById(bookId);
-        if (securityService.findLoggedInUser().equals(book.getBookOwner())){
+        if (securityService.findLoggedInUser().equals(book.getBookOwner())) {
             booksService.addComment(book, content);
             return "redirect:/book_in_lib?id=" + bookId;
         }
@@ -90,7 +112,8 @@ public class BooksController {
     public String bookInLibrary(Model model, @RequestParam(name = "id") Long id) {
         BookInLibrary book = booksService.getBookInLibraryById(id);
         if (securityService.findLoggedInUser().equals(book.getBookOwner())
-                || securityService.findLoggedInUser().getAccessibleUsers().contains(book.getBookOwner())) {
+                || securityService.findLoggedInUser().getAccessibleUsers().contains(book.getBookOwner()) ||
+                book.getLentTo().equals(securityService.findLoggedInUser())) {
             model.addAttribute("bookInLibrary", book);
             model.addAttribute("owner", securityService.findLoggedInUser().equals(book.getBookOwner()));
             return "book_in_lib";
@@ -99,19 +122,33 @@ public class BooksController {
         }
     }
 
-    @PostMapping(value="/lent/book")
-    public String lentBook(@RequestParam(name="username") String username, @RequestParam(name="bookId") Long bookId, @RequestParam(name="outside", defaultValue = "false") Boolean outside){
+    @PostMapping(value = "/lent/book")
+    public String lentBook(@RequestParam(name = "username") String username, @RequestParam(name = "bookId") Long bookId, @RequestParam(name = "outside", defaultValue = "false") Boolean outside) {
         BookInLibrary book = booksService.getBookInLibraryById(bookId);
-        if(securityService.findLoggedInUser().equals(book.getBookOwner())){
+        if (securityService.findLoggedInUser().equals(book.getBookOwner())) {
             booksService.lentBook(book, username, outside);
             return "redirect:/library?owner=" + securityService.findLoggedInUsername();
         }
         throw new AccessDeniedException("You have no right to lent this book");
     }
 
-    @PostMapping(value="return/book")
-    public String returnBook(@RequestParam(name="bookId") Long bookId) throws AccessDeniedException {
+    @PostMapping(value = "return/book")
+    public String returnBook(@RequestParam(name = "bookId") Long bookId) throws AccessDeniedException {
         booksService.returnBook(securityService.findLoggedInUser(), bookId);
         return "redirect:/library?owner=" + securityService.findLoggedInUsername();
     }
+
+    @PostMapping(value = "/add/book/to/library")
+    public String addBookToLib(@RequestParam(name = "bookId") Long bookId,
+                               @RequestParam(name = "username") String username,
+                               @RequestParam(name = "outside", defaultValue = "false") boolean outside) {
+        User user = userService.findByUsername(username);
+        if (securityService.findLoggedInUser().equals(user) || securityService.findLoggedInUser().getAccessibleUsers().contains(user)) {
+            booksService.addBookToLibrary(user, bookId, outside);
+            return "redirect:/books";
+        }
+        throw new AccessDeniedException("You have no right to this library!");
+    }
+
+
 }

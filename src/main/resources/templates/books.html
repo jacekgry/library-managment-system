@@ -6,6 +6,11 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
           rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+          integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+
 </head>
 <body>
 <div class="container">
@@ -15,20 +20,17 @@
         <div class="col-sm-3">
             <a th:href="${'/add/book'}" role="button" class="btn btn-success">Add book</a>
         </div>
-        <!--<div class="col-sm-9">-->
-            <!--<form class="form-inline float-right" th:action="@{/cars}" method="get">-->
-                <!--<input class="form-control" type="search" th:name='name' placeholder="name" th:value="${name}"-->
-                       <!--aria-label="Search">-->
-                <!--<input class="form-control" type="search" th:name='minPrice' placeholder="mininum price" th:value="${minPrice}"-->
-                       <!--aria-label="Search">-->
-                <!--<input class="form-control" type="search" th:name='maxPrice' th:value="${maxPrice}"-->
-                       <!--placeholder="maximum price"-->
-                       <!--aria-label="Search">-->
-                <!--<button class="btn btn-outline-success" type="submit">Search</button>-->
-            <!--</form>-->
-        <!--</div>-->
+        <div class="col-sm-9">
+            <form class="form-inline float-right" th:action="@{/books}" method="get">
+                <input class="form-control" type="search" th:name='title' placeholder="Title" th:value="${title}"
+                       aria-label="Search">
+                <input class="form-control" type="search" th:name='author' placeholder="Author"
+                       th:value="${author}"
+                       aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
     </div>
-
 
     <div>
         <table class="table table-striped" border="1">
@@ -36,7 +38,7 @@
                 <th>Title</th>
                 <th>Author</th>
                 <th>Pages</th>
-                <th>Add to my library</th>
+                <th>Add to library</th>
             </tr>
 
             <tr th:each="book : ${books}">
@@ -44,17 +46,73 @@
                 <td th:utext="${book.author}"></td>
                 <td th:utext="${book.pages}"></td>
                 <td>
-                    <form method="POST" th:action="@{/add_to_my_lib}">
-                        <input type="hidden" name="book" th:value="${book.id}"/>
-                        <button type="submit" name="submit" value="value" class="link-button">Add</button>
-                    </form>
+                    <div style="float: right"><a href="#" class="btn btn-info btn-lg" data-toggle="modal"
+                                                 data-target="#lendBookModal"
+                                                 th:attr="data-book=${book.title},data-bookid=${book.id}"><span
+                            class="fas fa-plus"></span></a></div>
                 </td>
             </tr>
 
         </table>
     </div>
-
-
 </div>
+
+
+<div class="modal fade" id="lendBookModal" tabindex="-1" role="dialog" aria-labelledby="addBookToLibModal"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBookToLibModal">Add book to library</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form th:action="@{/add/book/to/library}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <h5 class="book-name">Book:</h5>
+                    </div>
+
+                    <div class="form-check row">
+                        <input type="checkbox" class="form-check-input" id="outsideCheckbox" name="outside"
+                               value="true">
+                        <label class="form-check-label" for="outsideCheckbox">Borrowed from outside: </label>
+                    </div>
+
+                    <div class="row form-group" id="selectUser">
+                        <label class="col-sm-3 col-form-label">Whose library: </label>
+                        <select name="username"
+                                class="form-control">
+                            <option th:each="u: ${users}" th:value="${u.username}"
+                                    th:text="${u.username}"></option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="bookId" name="bookId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <input type="submit" value="Submit"/>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#lendBookModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget)
+        var book = button.data('book')
+        var bookId = button.data('bookid')
+
+
+        var modal = $(this)
+        modal.find('.book-name').text('Book: ' + book)
+        document.getElementById("bookId").value = bookId
+    })
+</script>
+
 </body>
 </html>

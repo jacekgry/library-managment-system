@@ -8,9 +8,9 @@ import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 
 public interface BooksService {
-    List<Book> getAllBooks();
-    List<BookInLibrary> getAllBooksInLibrary(User user);
-    void addBookToLibrary(User loggedUser, Long bookId);
+    List<Book> findBooksByTitleAndAuthor(String title, String author);
+    List<BookInLibrary> getAllBooksInLibrary(User user, String title, String author);
+    void addBookToLibrary(User loggedUser, Long bookId, boolean outside);
     ReadingStats calcStats(User user);
     Book getLastReadBookOfUser(User user);
     List<BookInLibrary> getBorrowedBooks(User user);
@@ -23,5 +23,5 @@ public interface BooksService {
     List<Reading> getCurrentReads(User loggedInUser);
     List<BookInLibrary> getLentBooks(User loggedInUser);
     void createBook(Book book);
-    Book searchForPossibleDuplicate(Book book);
+    List<Book> searchForPossibleDuplicate(Book book);
 }

@@ -43,11 +43,15 @@ public class LibraryController {
     }
 
     @GetMapping(value = "/library")
-    public String library(Model model, @RequestParam(name = "owner") String username) {
+    public String library(Model model, @RequestParam(name = "owner") String username,
+                          @RequestParam(name = "title", defaultValue = "") String title,
+                          @RequestParam(name = "author", defaultValue = "") String author) {
         User user = userService.findByUsername(username);
         if (securityService.findLoggedInUser().equals(user) ||
                 securityService.findLoggedInUser().getAccessibleUsers().contains(user)) {
-            model.addAttribute("books", booksService.getAllBooksInLibrary(user));
+            model.addAttribute("books", booksService.getAllBooksInLibrary(user, title, author));
+            model.addAttribute("title", title);
+            model.addAttribute("author", author);
             model.addAttribute("owner", securityService.findLoggedInUsername().equals(username));
             model.addAttribute("invitations", userService.findSentInvitations(user));
             model.addAttribute("borrowed", booksService.getBorrowedBooks(user));

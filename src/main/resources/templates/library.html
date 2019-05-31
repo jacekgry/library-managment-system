@@ -13,12 +13,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
 
-
-    <style>
-
-    </style>
-
-
 </head>
 <body>
 <div class="container">
@@ -40,13 +34,24 @@
             </nav>
             <div class="tab-content py-3 px-3 px-sm-0" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-books" role="tabpanel" aria-labelledby="nav-books-tab">
-                    <h2>Books in
-                        <span th:text="${#httpServletRequest.getParameter('owner')}"
-                              th:unless="${#httpServletRequest.getParameter('owner') == null}">
-                        </span>'s
-                        library:
-                    </h2>
+                    <div class="row">
+                        <h2 class="col-sm-3">Books in
+                            <span th:text="${#httpServletRequest.getParameter('owner')}"
+                                  th:unless="${#httpServletRequest.getParameter('owner') == null}"></span>'s library:
+                        </h2>
 
+                        <div class="col-sm-9">
+                            <form class="form-inline float-right" th:action="@{/library}" method="get">
+                                <input type="hidden" name="owner" th:value="${#httpServletRequest.getParameter('owner')}">
+                                <input class="form-control" type="search" th:name='title' placeholder="Title" th:value="${title}"
+                                       aria-label="Search">
+                                <input class="form-control" type="search" th:name='author' placeholder="Author"
+                                       th:value="${author}"
+                                       aria-label="Search">
+                                <button class="btn btn-outline-success" type="submit">Search</button>
+                            </form>
+                        </div>
+                    </div>
                     <table class="table table-striped" border="1">
                         <tr>
                             <th>Title</th>
@@ -79,8 +84,8 @@
                             </td>
                             <td th:if="${owner}">
                                 <div th:if="${book_pos.onOwnersShelf}" style="float: right"><a href="#" class="btn btn-info btn-lg" data-toggle="modal"
-                                                             data-target="#editCarModal"
-                                                             th:attr="data-car=${book_pos.book.title},data-carid=${book_pos.id}"><span
+                                                             data-target="#lendBookModal"
+                                                             th:attr="data-book=${book_pos.book.title},data-bookid=${book_pos.id}"><span
                                         class="fas fa-arrow-circle-right"></span></a></div>
                             </td>
                             <td th:if="${owner}">
@@ -184,13 +189,13 @@
 </div>
 
 
-<div class="modal fade" id="editCarModal" tabindex="-1" role="dialog" aria-labelledby="editCarModalLabel"
+<div class="modal fade" id="lendBookModal" tabindex="-1" role="dialog" aria-labelledby="editBookModalLabel"
      aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title" id="editCarModalLabel">Lent book</h5>
+                <h5 class="modal-title" id="editBookModalLabel">Lent book</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -199,7 +204,7 @@
             <form th:action="@{/lent/book}" method="post">
                 <div class="modal-body">
                     <div class="form-group">
-                        <h5 class="car-name">Book:</h5>
+                        <h5 class="book-name">Book:</h5>
                     </div>
 
                     <div class="form-check row">
@@ -230,13 +235,13 @@
 
 
 <script>
-    $('#editCarModal').on('show.bs.modal', function (event) {
+    $('#lendBookModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget)
-        var car = button.data('car')
-        var bookId = button.data('carid')
+        var book = button.data('book')
+        var bookId = button.data('bookid')
 
         var modal = $(this)
-        modal.find('.car-name').text('Book: ' + car)
+        modal.find('.book-name').text('Book: ' + book)
         console.log('book id: ' + bookId)
         document.getElementById("bookId").value = bookId
     })
@@ -247,7 +252,6 @@
         }
         else {
             $("#selectUser").show()
-
         }
     });
 </script>

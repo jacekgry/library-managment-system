@@ -13,8 +13,29 @@
 <div class="container">
     <div th:replace="navbar::navbarinclude"></div>
 
+    <div th:if="${duplicates != null}">
+        <h2>Possible duplicates found for book you want to add. Are you sure?</h2>
+        <h2>Possible duplicates:</h2>
+        <table class="table table-striped" border="1">
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Pages</th>
+            </tr>
+
+            <tr th:each="book : ${duplicates}">
+                <td th:utext="${book.title}"></td>
+                <td th:utext="${book.author}"></td>
+                <td th:utext="${book.pages}"></td>
+            </tr>
+        </table>
+    </div>
+
+
+
     <form action="#" th:action="@{/add/book}" th:object="${book}" method="post">
         <input type="hidden" th:field="*{id}">
+        <input type="hidden" name="force" th:value="${duplicates != null}">
         <div class="form-group row">
             <label class="col-sm-2 col-form-label" for="titleInput">Title: </label>
             <input type="text" id="titleInput" class="form-control col-sm-6" th:field="*{title}">
