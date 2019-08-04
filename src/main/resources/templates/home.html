@@ -10,6 +10,11 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
           rel="stylesheet">
+
+    <style>
+
+    </style>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
 </head>
@@ -17,22 +22,23 @@
 <div class="container">
     <div th:replace="navbar::navbarinclude"></div>
 
-    <div class="row">
-        <span>Average books read per year: </span>
+
+    <div class="row col-sm-4">
+        <span >Average books read per year: </span>
         <span th:text="${stats.avgBooksPerYear}"></span>
     </div>
 
-    <div class="row">
+    <div class="row col-sm-4">
         <span>Average books read per month: </span>
         <span th:text="${stats.avgBooksPerMonth}"></span>
     </div>
 
-    <div class="row">
+    <div class="row col-sm-4">
         <span>Average pages read per day: </span>
         <span th:text="${stats.avgPagesPerDay}"></span>
     </div>
 
-    <div th:if="${lastBook}" class="row">
+    <div th:if="${lastBook}" class="row col-sm-4">
         <span>Last read book: </span>
         <a th:href="${'/book/' + lastBook.id}" th:text="${lastBook.title}"></a>
     </div>

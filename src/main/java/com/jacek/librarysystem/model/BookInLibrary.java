@@ -68,12 +68,18 @@ public class BookInLibrary {
             Hire hire = hireOptional.get();
             if (hire.getBorrower() == null) {
                 this.lentToOutside = true;
-            } else if (hire.getBorrower().equals(this.bookOwner)) {
-                this.borrowedFromOutside = true;
-            } else {
+            } else{
                 this.lentTo = hire.getBorrower();
+                if(hire.isOutside()){
+                    this.borrowedFromOutside = true;
+                }
             }
+
             onOwnersShelf = false;
+//            else if (hire.isOutside()) {
+//                this.borrowedFromOutside = true;
+//            } else {
+//            }
         }
     }
 

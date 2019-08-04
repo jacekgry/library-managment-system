@@ -27,6 +27,8 @@ public class InvitationToLibrary {
     @JoinColumn(name = "guest")
     private User guest;
 
+    private boolean sent;
+
     private String email;
 
     private String token;

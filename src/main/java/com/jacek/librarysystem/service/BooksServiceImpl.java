@@ -89,7 +89,7 @@ public class BooksServiceImpl implements BooksService {
         List<Reading> readings = readingRepository.getAllByUser(user);
         Optional<Reading> lastReading = readings.stream()
                 .filter(r -> r.getEndDate() != null)
-                .sorted(Comparator.comparing(Reading::getEndDate))
+                .sorted(Comparator.comparing(Reading::getEndDate).reversed())
                 .findFirst();
 
         if (lastReading.isPresent()) {

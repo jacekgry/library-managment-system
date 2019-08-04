@@ -29,10 +29,10 @@ public class Reading {
     @JoinColumn(name = "book_in_library")
     private BookInLibrary book;
 
-    @Temporal(value = TemporalType.DATE)
+    @Temporal(value = TemporalType.TIMESTAMP)
     @NotNull
     private Date startDate;
 
-    @Temporal(value = TemporalType.DATE)
+    @Temporal(value = TemporalType.TIMESTAMP)
     private Date endDate;
 }

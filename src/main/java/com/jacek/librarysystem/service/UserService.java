@@ -1,5 +1,6 @@
 package com.jacek.librarysystem.service;
 
+import com.jacek.librarysystem.dto.UserDto;
 import com.jacek.librarysystem.model.InvitationToLibrary;
 import com.jacek.librarysystem.model.User;
 
@@ -7,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 public interface UserService {
-    void save(User user);
+    void save(UserDto user);
 
     User findByUsername(String username);
 
@@ -24,5 +25,7 @@ public interface UserService {
     void acceptInvitation(User user, String token);
 
     List<User> findAllByUsernameIsNotAndConfirmed(String username, boolean confirmed);
+
+    void cancelInvitation(User loggedInUser, Long invId);
 }
 

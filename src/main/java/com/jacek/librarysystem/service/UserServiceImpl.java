@@ -1,7 +1,10 @@
 package com.jacek.librarysystem.service;
 
+import com.jacek.librarysystem.dto.UserDto;
+import com.jacek.librarysystem.exception.EmailTakenException;
 import com.jacek.librarysystem.exception.InvitationNotFoundException;
 import com.jacek.librarysystem.exception.TokenNotFoundException;
+import com.jacek.librarysystem.exception.UsernameTakenException;
 import com.jacek.librarysystem.model.InvitationToLibrary;
 import com.jacek.librarysystem.model.User;
 import com.jacek.librarysystem.model.VerificationToken;
@@ -34,9 +37,23 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public void save(User user) {
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+    @Transactional
+    public void save(UserDto userDto) {
+
+        if(userRepository.findByUsername(userDto.getUsername()).isPresent()){
+            throw new UsernameTakenException();
+        }
+        if(userRepository.findByEmail(userDto.getEmail()).isPresent()){
+            throw new EmailTakenException();
+        }
+
+        User user = new User();
+        user.setUsername(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
         user.setRegistrationDate(new Date());
+        user.setConfirmed(false);
+
         userRepository.save(user);
         generateTokenAndSendConfirmationEmail(user);
     }
@@ -53,9 +70,22 @@ public class UserServiceImpl implements UserService {
                 .owner(owner)
                 .email(guestEmail)
                 .token(UUID.randomUUID().toString())
+                .sent(false)
                 .build();
-        sendMailWithInvitation(invitation);
+
         invitationToLibraryRepository.save(invitation);
+
+        new Thread(() -> {
+            try {
+                sendMailWithInvitation(invitation);
+                invitation.setSent(true);
+                invitationToLibraryRepository.save(invitation);
+            } catch (Exception e) {
+                invitationToLibraryRepository.delete(invitation);
+                log.warn(e.getStackTrace().toString());
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     @Override
@@ -63,7 +93,7 @@ public class UserServiceImpl implements UserService {
     public void acceptInvitation(User user, String token) {
         InvitationToLibrary invitation = invitationToLibraryRepository.findByToken(token)
                 .orElseThrow(() -> new InvitationNotFoundException("Invitation not found"));
-        if(!user.getEmail().equals(invitation.getEmail())){
+        if (!user.getEmail().equals(invitation.getEmail())) {
             throw new AccessDeniedException("You are not allowed to accept this invitation");
         }
         invitation.setConfirmed(true);
@@ -74,6 +104,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findAllByUsernameIsNotAndConfirmed(String username, boolean confirmed) {
         return userRepository.findAllByUsernameIsNotAndConfirmed(username, confirmed);
+    }
+
+    @Override
+    @Transactional
+    public void cancelInvitation(User loggedInUser, Long invId) {
+        InvitationToLibrary invitation = invitationToLibraryRepository.findById(invId)
+                .orElseThrow(() -> new InvitationNotFoundException("Invitation not found"));
+        if (invitation.getOwner().equals(loggedInUser)) {
+            invitationToLibraryRepository.delete(invitation);
+        } else {
+            throw new AccessDeniedException("You are no owner of this invitation!");
+        }
     }
 
     @Override
@@ -89,7 +131,7 @@ public class UserServiceImpl implements UserService {
         verificationTokenRepository.delete(verificationToken);
     }
 
-    @Scheduled(fixedRate = 40000)
+    @Scheduled(fixedRate = 120_000)
     @Transactional
     public void deleteUnconfirmedUsers() {
         log.info("Deleting unconfirmed accounts...");
@@ -125,12 +167,19 @@ public class UserServiceImpl implements UserService {
         email.setText("Confirm your email address by clicking: " + "http://localhost:9090/confirm?token=" + token + "\n"
                 + "Token expiry date: " + verificationToken.getExpiryDate().toString());
 
-        javaMailSender.send(email);
+        new Thread(() -> {
+            try {
+                javaMailSender.send(email);
+            } catch (Exception e) {
+                verificationTokenRepository.delete(verificationToken);
+            }
+        }).start();
+
     }
 
     private VerificationToken createVerificationToken(User user, String token) {
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.SECOND, 60);
+        calendar.add(Calendar.MINUTE, 2);
         Date expiryDate = calendar.getTime();
 
         VerificationToken verificationToken = VerificationToken.builder()
@@ -150,24 +199,22 @@ public class UserServiceImpl implements UserService {
         javaMailSender.send(email);
     }
 
-    private String writeInvitationMailText(InvitationToLibrary invitation){
+    private String writeInvitationMailText(InvitationToLibrary invitation) {
         StringBuilder sb = new StringBuilder();
         String url = "http://localhost:9090/accept?token=" + invitation.getToken();
         sb.append("Library owner ")
                 .append(invitation.getOwner().getUsername())
                 .append("\n invites you to his library! \n");
         Optional<User> userOptional = userRepository.findByEmail(invitation.getEmail());
-        if (!userOptional.isPresent()){
+        if (userOptional.isPresent()) {
             User user = userOptional.get();
-            if(!user.isConfirmed()){
+            if (!user.isConfirmed()) {
                 sb.append("Confirm your account and then accept invitation by clicking the link: \n");
+            } else {
+                sb.append("Accept the invitation by clicking the link:\n");
             }
-            else{
-                sb.append("Create account and then accept the invitation by clicking the link: \n");
-            }
-        }
-        else{
-            sb.append("Accept the invitation by clicking the link:\n");
+        } else {
+            sb.append("Create account and then accept the invitation by clicking the link: \n");
         }
         sb.append(url);
         return sb.toString();

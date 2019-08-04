@@ -1,11 +1,13 @@
 package com.jacek.librarysystem.model;
 
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
@@ -25,7 +27,7 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @NotBlank
+    @NotNull
     private String password;
 
     private boolean confirmed;
@@ -42,29 +44,35 @@ public class User {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date registrationDate;
 
-    public Set<User> getAccessibleUsers(){
+    public Set<User> getAccessibleUsers() {
         return
                 invitationsReceived.stream()
-                .filter(InvitationToLibrary::isConfirmed)
-                .map(InvitationToLibrary::getOwner)
-                .collect(Collectors.toSet());
+                        .filter(InvitationToLibrary::isConfirmed)
+                        .map(InvitationToLibrary::getOwner)
+                        .collect(Collectors.toSet());
     }
 
-    public LocalDate getRegisteredAsLocalDate(){
+    public LocalDate getRegisteredAsLocalDate() {
         return new java.sql.Date(getRegistrationDate().getTime()).toLocalDate();
     }
 
-    public long getDaysSinceRegistration(){
+    public long getDaysSinceRegistration() {
 //        return Period.between(getRegisteredAsLocalDate(), LocalDate.now()).
-        return ChronoUnit.DAYS.between(getRegisteredAsLocalDate(), LocalDate.now());
+        long days = ChronoUnit.DAYS.between(getRegisteredAsLocalDate(), LocalDate.now());
+        if (days == 0) return 1;
+        return days;
     }
 
-    public int getMonthsSinceRegistration(){
-        return Period.between(getRegisteredAsLocalDate(), LocalDate.now()).getMonths();
+    public int getMonthsSinceRegistration() {
+        int months = Period.between(getRegisteredAsLocalDate(), LocalDate.now()).getMonths();
+        if (months == 0) return 1;
+        return months;
     }
 
-    public int getYearsSinceRegistration(){
-        return Period.between(getRegisteredAsLocalDate(), LocalDate.now()).getYears();
+    public int getYearsSinceRegistration() {
+        int years = Period.between(getRegisteredAsLocalDate(), LocalDate.now()).getYears();
+        if (years == 0) return 1;
+        return years;
     }
 
     @Override

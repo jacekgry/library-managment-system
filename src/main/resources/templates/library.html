@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Customers</title>
+    <title>Library</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.min.css}"
           rel="stylesheet">
@@ -121,11 +121,12 @@
                             <td th:text="${inv.email}"></td>
                             <td>
                                 <span th:if="${inv.confirmed}">Accepted</span>
-                                <span th:if="${!inv.confirmed}">Pending</span>
+                                <span th:if="${!inv.confirmed && inv.sent}">Pending</span>
+                                <span th:if="${!inv.sent}">Sending...</span>
                             </td>
                             <td>
                                 <form method="POST" th:action="@{/cancel/access}">
-                                    <input type="hidden" name="book" th:value="${inv.id}"/>
+                                    <input type="hidden" name="id" th:value="${inv.id}"/>
                                     <button type="submit" name="submit" value="value" class="link-button">Cancel
                                     </button>
                                 </form>

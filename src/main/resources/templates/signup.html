@@ -33,18 +33,31 @@
 
 </head>
 <body>
-
 <div class="login-form">
+    <div  th:if="${#httpServletRequest.getParameter('sent') != null}">
+        <div class="">
+            <div class="text-info text-center" style="font-size: 14px" th:text="${'You should receive email with confirmation  link soon.'}">
+                You should receive email with confirmation  link soon.
+            </div>
+        </div>
+    </div>
+
     <form th:action="@{/signup}" th:object="${user}" method="post">
         <h2 class="text-center">Sign up</h2>
-        <div class="form-group">
-            <input type="text" class="form-control" placeholder="Username" required="required" th:field="*{username}">
+        <div class="form-group row">
+            <input type="text" class="form-control col-sm-12" placeholder="Username" required="required" th:field="*{username}">
+            <label class="col-sm-12" style="color: red" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Username
+                Error</label>
         </div>
-        <div class="form-group">
+        <div class="form-group row">
             <input type="text" class="form-control" placeholder="Email" required="required" th:field="*{email}">
+            <label class="col-sm-12" style="color: red" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Email
+                Error</label>
         </div>
-        <div class="form-group">
+        <div class="form-group row">
             <input type="password" class="form-control" placeholder="Password" required="required" th:field="*{password}">
+            <label class="col-sm-12" style="color: red" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password
+                Error</label>
         </div>
         <div class="form-group">
             <button type="submit" class="btn btn-primary btn-block">Sign up</button>

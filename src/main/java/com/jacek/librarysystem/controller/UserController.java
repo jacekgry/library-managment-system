@@ -1,6 +1,9 @@
 package com.jacek.librarysystem.controller;
 
 import com.jacek.librarysystem.dto.ReadingStats;
+import com.jacek.librarysystem.dto.UserDto;
+import com.jacek.librarysystem.exception.EmailTakenException;
+import com.jacek.librarysystem.exception.UsernameTakenException;
 import com.jacek.librarysystem.model.Book;
 import com.jacek.librarysystem.model.User;
 import com.jacek.librarysystem.security.SecurityService;
@@ -12,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -33,24 +37,32 @@ public class UserController {
                         instanceof AnonymousAuthenticationToken) ){
             return "redirect:/home";
         }
-        model.addAttribute("user", new User());
+        model.addAttribute("user", new UserDto());
         return "signup";
     }
 
     @RequestMapping(value = "signup", method = RequestMethod.POST)
-    public String register(@ModelAttribute("user") @Valid User user, BindingResult bindingResult, Model model){
+    public String register(@ModelAttribute("user") @Valid UserDto user, BindingResult bindingResult, Model model){
         if(bindingResult.hasErrors()){
             return "signup";
         }
-        user.setConfirmed(false);
-        userService.save(user);
-
-        return "redirect:/signin";
+        try {
+            userService.save(user);
+            return "redirect:/signup?sent";
+        }
+        catch(UsernameTakenException e){
+            bindingResult.rejectValue("username","error.user", "Username already in use");
+            return "signup";
+        }
+        catch (EmailTakenException e){
+            bindingResult.rejectValue("email","error.user", "Email already in use");
+            return "signup";
+        }
     }
 
-    @RequestMapping(value = "signin", method = RequestMethod.GET)
+    @RequestMapping(value = "/signin", method = RequestMethod.GET)
     public String login(Model model){
-        model.addAttribute("user", new User());
+        model.addAttribute("user", new UserDto());
         if(SecurityContextHolder.getContext().getAuthentication() != null &&
                 SecurityContextHolder.getContext().getAuthentication().isAuthenticated()
                 &&  !(SecurityContextHolder.getContext().getAuthentication()
@@ -76,6 +88,12 @@ public class UserController {
     public String confirm(@RequestParam(name = "token") String token){
         userService.confirmEmail(token);
         return "redirect:/signin";
+    }
+
+    @PostMapping(value="/cancel/access")
+    public String cancelString(@RequestParam(name="id") Long invId){
+        userService.cancelInvitation(securityService.findLoggedInUser(), invId);
+        return "redirect:/library?owner=" + securityService.findLoggedInUsername();
     }
 
 }
